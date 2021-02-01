@@ -136,23 +136,6 @@ unsigned int working_time, total_working_time;
 // \"exit\": exit without save\n\n\
 // \"save\": save end exit\n"};
 
-// const char moo_message[] PROGMEM = {"\
-//           (__)\n\
-//           (oo)\n\
-//     /------\\/\n\
-//   / |      ||\n\
-//  * /\\---/\\\n\
-//  ~~~~~~~~\n\
-// ...\"Have you mooed today?\"..."};
-
-// const char paramoo_message[] PROGMEM = {"\
-// _..~~****~~.._\n\
-//      \\/        \\/\n\
-//        \\      (__)\n\
-//          \\    (- -)\n\
-//    *---,------\\/\n\
-//         |      ||\n\
-//        /\\---/\\\n"};
 
 bool paramoo = 0;
 
