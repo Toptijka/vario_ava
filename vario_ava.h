@@ -1,12 +1,5 @@
 //based on GyverPWM
 
-#ifndef vario_ava_h
-#define vario_ava_h
-#include <Arduino.h>
-
-#define CORRECT_PWM 1
-#define FAST_PWM 0
-
 /*
 	Библиотека для расширенной генерации ШИМ на ATmega328 (Arduino UNO/Nano/Pro Mini...)
 	Разработчики: Egor Zaharov и AlexGyver
