@@ -39,12 +39,7 @@ Credits:
 #include <stdlib.h>                     //we need that to use dtostrf() and convert float to string
 #include <math.h>
 #include "vario_ava.h"
-#include <EEPROM.h>
 
-// #define BT_SPEED 115200 //9600 // 38400
-
-#define SAMPLE_DISP 100
-/////////////////////////////////////////
 /////////////////////////////////////////
 long Temperature = 0;
 long Pressure = 101325;
@@ -69,76 +64,13 @@ int      button_pin = 3;
 float      battery_level;
 bool replace_battery = 0;
 int fake_battery;
-//float batt_array[8];
-//int batt_array_pointer = 0;
 float batt_average;
 
-//#include "PWM.h"
 #define buzz_max_array 100
 #define alt_max_array 50
 #define max_volume 800 //350
 
-/* ******* saved parameters ****** */
-int buzz_size_array;
-int buzz_up_0_thres;
-int buzz_up_1_thres;
-int buzz_up_2_thres;
-int buzz_up_3_thres;
-int buzz_down_0_thres;
-int buzz_down_1_thres;
-int buzz_up_start_freq;
-int buzz_down_start_freq;
-int buzz_up_factor;
-int buzz_down_factor;
-int battery_alarm_level;
-int bat_temp_en;
-int buzz_always;
-int flight_total;
-int flight_last;
-int buzz_volume;
-int flight_time;
-unsigned int total_flight_time;
-unsigned int flight_start_filter;
-int battery_calibration;
-unsigned int working_time, total_working_time;
-/* ******************************* */
-
-//int vario = 0;
-
-// const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
-// const char help_message[] PROGMEM = {"\
-// In this mode you can set parameters.\n\n\
-// up_freq = (vario_average - buzz_up_0_thres) * buzz_up_factor + buzz_up_start_freq\n\
-// down_freq = buzz_down_start_freq + (vario_average + buzz_down_0_thres) / buzz_down_factor\n\n\
-// p0 - buzz_size_array (20) [1-100]\n\
-// p1 - buzz_up_0_thres, cm/s (20)\n\
-// p2 - buzz_up_1_thres, cm/s (50)\n\
-// p3 - buzz_up_2_thres, cm/s (100)\n\
-// p4 - buzz_up_3_thres, cm/s (300)\n\
-// p5 - buzz_down_0_thres, cm/s (-150)\n\
-// p6 - buzz_down_1_thres, cm/s (-300)\n\
-// p7 - buzz_up_start_freq, Hz (700)\n\
-// p8 - buzz_down_start_freq, Hz (300)\n\
-// p9 - buzz_up_factor (4)\n\
-// p10 - buzz_down_factor (8)\n\
-// p11 - battery_alarm_level, % (40)\n\
-// p12 - bat_temp_en (0)\n\
-// p13 - buzz_always (0)\n\
-// p14 - buzz_volume (200) [0-800]\n\
-// p15 - flight_start_filter, ms (4000)\n\
-// p16 - flight_time, min\n\
-// p17 - total_flight_time, min\n\
-// p19 - total_working_time, min\n\
-// Example: \"p0=20\"\n\n\
-// \"default\": reset to default values\n\n\
-// \"calibrate\": use this command after fully charging the battery\n\n\
-// \"report\": report current values\n\n\
-// \"exit\": exit without save\n\n\
-// \"save\": save end exit\n"};
-
-
 bool paramoo = 0;
-
 
 unsigned long alt_array[alt_max_array];
 unsigned long time_array[alt_max_array];
@@ -160,86 +92,7 @@ bool programming_mode = 0;
 bool bt_mode = 0;
 bool flight = 0;
 
-GyverBME280 bme; 
-
-void update_int(int addr, int val)
-{
-  EEPROM.update(addr,highByte(val));
-  EEPROM.update(addr+1,lowByte(val));  
-}
-
-void update_params()
-{
-  update_int(0*2,buzz_size_array);
-  update_int(1*2,buzz_up_0_thres);
-  update_int(2*2,buzz_up_1_thres);
-  update_int(3*2,buzz_up_2_thres);
-  update_int(4*2,buzz_up_3_thres);
-  update_int(5*2,buzz_down_0_thres);
-  update_int(6*2,buzz_down_1_thres);
-  update_int(7*2,buzz_up_start_freq);
-  update_int(8*2,buzz_down_start_freq);
-  update_int(9*2,buzz_up_factor);
-  update_int(10*2,buzz_down_factor);
-  update_int(11*2,battery_alarm_level);
-  update_int(12*2,bat_temp_en);
-  update_int(13*2,buzz_always);
-  update_int(14*2,buzz_volume);
-  update_int(15*2,flight_start_filter);
-  update_int(16*2,flight_time);
-  update_int(17*2,total_flight_time);
-  update_int(18*2,battery_calibration);
-  update_int(19*2,total_working_time);
-}
-
-int read_int(int addr)
-{
-return EEPROM.read(addr)*256 + EEPROM.read(addr+1);
-}
-
-void read_params()
-{
-  buzz_size_array = read_int(0*2);
-  buzz_up_0_thres = read_int(1*2);
-  buzz_up_1_thres = read_int(2*2);
-  buzz_up_2_thres = read_int(3*2);
-  buzz_up_3_thres = read_int(4*2);
-  buzz_down_0_thres = read_int(5*2);
-  buzz_down_1_thres = read_int(6*2);
-  buzz_up_start_freq = read_int(7*2);
-  buzz_down_start_freq = read_int(8*2);
-  buzz_up_factor = read_int(9*2);
-  buzz_down_factor = read_int(10*2);
-  battery_alarm_level = read_int(11*2);
-  bat_temp_en = read_int(12*2);
-  buzz_always = read_int(13*2);
-  buzz_volume = read_int(14*2);
-  flight_start_filter = read_int(15*2);
-  flight_time = !flight? (unsigned int) read_int(16*2) : flight_time;
-  total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
-  battery_calibration = read_int(18*2);
-  total_working_time = (unsigned int) read_int(19*2);
-}
-
-void default_params()
-{
-buzz_size_array = 20;
-buzz_up_0_thres = 20;
-buzz_up_1_thres = 50;
-buzz_up_2_thres = 100;
-buzz_up_3_thres = 300;
-buzz_down_0_thres = -150;
-buzz_down_1_thres = -300;
-buzz_up_start_freq = 700;
-buzz_down_start_freq = 300;
-buzz_up_factor = 4;
-buzz_down_factor = 8;
-battery_alarm_level = 40;
-bat_temp_en = 0;
-buzz_always = 0;
-buzz_volume = 50;
-flight_start_filter = 4000;
-}
+GyverBME280 bme;
 
 void buzzer(int freq, bool buzblink)
 {
@@ -259,21 +112,6 @@ void buzzer(int freq, bool buzblink)
     PWM_set(9, 0);
     buzz_en = 0;
     }
-}
-
-float read_voltage()
-{
-  digitalWrite(battery_tr_pin,1);
-  batt_average = 0.95 * batt_average + 0.05 * ((float) analogRead(battery_pin)) * 2 * 3.3 / 1024;
-  digitalWrite(battery_tr_pin,0);
-  //float batt_average = 0;
-  //batt_array[batt_array_pointer] = ((float) analogRead(battery_pin)) * 2 * 3.3 / 1024;
-  //batt_array_pointer = (batt_array_pointer < 7)? batt_array_pointer + 1 : 0;
-  //for(int i = 0; i < 8; i++)
-  //  batt_average += batt_array[i];
-  //return batt_average / 8 ;
-  
-  return batt_average ;
 }
 
 void sleep()
@@ -341,11 +179,12 @@ digitalWrite(bt_rst_pin, 1);
   
 uart.println(F("Try to connect bmp280..."));
 
-  bme.setFilter(FILTER_COEF_16);
-  bme.setTempOversampling(OVERSAMPLING_8);
-  bme.setPressOversampling(OVERSAMPLING_16);
-  bme.setStandbyTime(STANDBY_500US);
-  if(bme.begin()) uart.println(F("bmp280!!!"));
+bme.setFilter(FILTER_COEF_16);
+bme.setTempOversampling(OVERSAMPLING_8);
+bme.setPressOversampling(OVERSAMPLING_16);
+bme.setStandbyTime(STANDBY_500US);
+if(!bme.begin()) while (1);
+uart.println(F("bmp280!!!"));
 
 pinMode(9, OUTPUT); //buzzer pin
 
@@ -401,7 +240,7 @@ String rx_dat="";
 if(!programming_mode){
 
   Pressure = bme.readPressure();
-//uart.println(millis());
+  //uart.println(Pressure);
   long average_pressure = Pressure;//Averaging_Filter(Pressure);
   Altitude = (44330 * (1 - pow(((float)average_pressure / p0), 0.190295)) * 100);
 
@@ -716,13 +555,13 @@ if(uart.available())
 
   if (rx_dat.startsWith("moo")) {
     paramoo = 1;
-    for (int i = 0; i < strlen_P(moo_message); i++)
+    for (int i = 0; i < sizeof(moo_message); i++)
       uart.print((char)pgm_read_byte(&moo_message[i]));
   }
 
   if (rx_dat.startsWith("yes") && paramoo) {
     paramoo = 0;
-    for (int i = 0; i < strlen_P(paramoo_message); i++)
+    for (int i = 0; i < sizeof(paramoo_message); i++)
       uart.print((char)pgm_read_byte(&paramoo_message[i]));
   }
 

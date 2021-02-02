@@ -1,5 +1,14 @@
 //based on GyverPWM
 
+#ifndef vario_ava_h
+#define vario_ava_h
+#include <Arduino.h>
+#include <EEPROM.h>
+
+
+#define CORRECT_PWM 1
+#define FAST_PWM 0
+
 /*
 	Библиотека для расширенной генерации ШИМ на ATmega328 (Arduino UNO/Nano/Pro Mini...)
 	Разработчики: Egor Zaharov и AlexGyver
@@ -169,32 +178,8 @@ void PWM_TMR1_10BIT();	// Установить таймер 1 (ШИМ на D9 и
 
 
 /* **************************** my funcs ********************************** */
-/*
-void update_int(int addr, int val)
 
-void update_params()
-
-int read_int(int addr)
-
-void read_params()
-
-void default_params()
-
-void buzzer(int freq, bool buzblink)
-
-float read_voltage()
-
-void sleep()
-
-*/
-//void buzz_set_volume(int in_dat, int max_vol);
 void buzz_end_of_flight(int buzz_vol);
-
-/*volatile boolean button = false;*/
-/*volatile unsigned long button_time = 0;*/
-//void press_button();
-
-
 
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
@@ -226,5 +211,47 @@ Example: \"p0=20\"\n\n\
 \"report\": report current values\n\n\
 \"exit\": exit without save\n\n\
 \"save\": save end exit\n"};
+
+const byte moo_message[] PROGMEM = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 95, 95, 41, 10, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 111, 111, 41, 10, 32, 32, 32, 32, 47, 45, 45, 45, 45, 45, 45, 92, 47, 10, 32, 32, 47, 32, 124, 32, 32, 32, 32, 32, 32, 124, 124, 10, 32, 42, 32, 47, 92, 45, 45, 45, 47, 92, 10, 32, 126, 126, 126, 126, 126, 126, 126, 126, 10, 46, 46, 46, 34, 72, 97, 118, 101, 32, 121, 111, 117, 32, 109, 111, 111, 101, 100, 32, 116, 111, 100, 97, 121, 63, 34, 46, 46, 46};
+const byte paramoo_message[] PROGMEM = {95, 46, 46, 126, 126, 42, 42, 42, 42, 126, 126, 46, 46, 95, 10, 32, 32, 32, 32, 32, 92, 47, 32, 32, 32, 32, 32, 32, 32, 32, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 32, 32, 40, 95, 95, 41, 10, 32, 32, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 40, 45, 32, 45, 41, 10, 32, 32, 32, 42, 45, 45, 45, 44, 45, 45, 45, 45, 45, 45, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 32, 124, 32, 32, 32, 32, 32, 32, 124, 124, 10, 32, 32, 32, 32, 32, 32, 32, 47, 92, 45, 45, 45, 47, 92};
+
+/* ********************************************************** */
+extern bool flight;
+extern int battery_tr_pin;
+extern float batt_average;
+extern int battery_pin;
+
+extern int buzz_size_array;
+extern int buzz_up_0_thres;
+extern int buzz_up_1_thres;
+extern int buzz_up_2_thres;
+extern int buzz_up_3_thres;
+extern int buzz_down_0_thres;
+extern int buzz_down_1_thres;
+extern int buzz_up_start_freq;
+extern int buzz_down_start_freq;
+extern int buzz_up_factor;
+extern int buzz_down_factor;
+extern int battery_alarm_level;
+extern int bat_temp_en;
+extern int buzz_always;
+extern int flight_total;
+extern int flight_last;
+extern int buzz_volume;
+extern int flight_time;
+extern unsigned int total_flight_time;
+extern unsigned int flight_start_filter;
+extern int battery_calibration;
+extern unsigned int working_time, total_working_time;
+
+void update_int(int addr, int val);
+void update_params();
+int read_int(int addr);
+void read_params();
+void default_params();
+
+/* ********************************************************** */
+
+float read_voltage();
 
 #endif

@@ -21,6 +21,11 @@ void MLTBT05::configure(const char * bleName)
 	
 	//SoftwareSerial bleSerial(bleTxPin, bleRxPin);
 	Serial.begin(bleBaud);
+
+  delay(5000);
+  Serial.println("Ready to configurate?");
+  delay(1000);
+  Serial.println("GO!");
 	
 	char text[32] = "";
 	sprintf(text, "AT+NAME%s", bleName);
@@ -39,8 +44,18 @@ AT+BAUDA——460800
 AT+BAUDB——921600
 AT+BAUDC—-1382400
 */
+/* for JDY-23
+0——*115200
+1——57600
+2——38400
+3——19200
+4——9600
+5——4800
+6——2400
+*/
+
   //sendCommand(&bleSerial, "AT+ORGL");
-  sendCommand( "AT+BAUD8");
+  sendCommand( "AT+BAUD0");
 	sendCommand( "AT+ROLE3");	// slave mode
 	sendCommand( "AT+TYPE0");	// unsecure, no pin required
 	sendCommand( "AT+POWE3");	// max RF power

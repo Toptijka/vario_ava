@@ -23,20 +23,40 @@ AT+BAUDB——921600
 AT+BAUDC—-1382400
 */
 
+int baud = 1000;
+
 const char name [] = "fanfario";
-MLTBT05 my_bt (3,4,5,UART_SPEED);
+MLTBT05 my_bt (3,4,6,UART_SPEED);
 
 
 void setup() {
+  // enable power
+  pinMode(5, OUTPUT);
+  digitalWrite(5, HIGH);
+
+  pinMode(8, OUTPUT);
+  digitalWrite(8, LOW);
+  digitalWrite(8, HIGH);
+  //
   
-  mySerial.begin(UART_SPEED);
+  pinMode(7, OUTPUT);
+  digitalWrite(7, LOW);
+  
+ // mySerial.begin(UART_SPEED);
   
   my_bt.configure(name);
   
-  mySerial.println("Hello AVA!");
+ // mySerial.println("Hello AVA!");
 
+
+  digitalWrite(7, HIGH);
+
+  Serial.begin(115200);
 }
 
 void loop() {
+
+  delay(1000);
+  Serial.println("Hello AVA!");
 
 }

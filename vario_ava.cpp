@@ -597,7 +597,42 @@ float PWM_square_D9(float frequency) {
 }
 
 /* **************************** my funcs ********************************** */
-/*
+
+void buzz_end_of_flight(int buzz_vol)
+{
+  PWM_set(9, buzz_vol);
+  for (int i = 0; i < 50; i++) {
+    PWM_frequency(9, 700-i*8, CORRECT_PWM);//FAST_PWM);
+    delay(10);
+  }
+  PWM_set(9, 0);
+}
+
+/* ********************************************************************** */
+
+int buzz_size_array;
+int buzz_up_0_thres;
+int buzz_up_1_thres;
+int buzz_up_2_thres;
+int buzz_up_3_thres;
+int buzz_down_0_thres;
+int buzz_down_1_thres;
+int buzz_up_start_freq;
+int buzz_down_start_freq;
+int buzz_up_factor;
+int buzz_down_factor;
+int battery_alarm_level;
+int bat_temp_en;
+int buzz_always;
+int flight_total;
+int flight_last;
+int buzz_volume;
+int flight_time;
+unsigned int total_flight_time;
+unsigned int flight_start_filter;
+int battery_calibration;
+unsigned int working_time, total_working_time;
+
 void update_int(int addr, int val)
 {
   EEPROM.update(addr,highByte(val));
@@ -649,7 +684,7 @@ void read_params()
   battery_alarm_level = read_int(11*2);
   bat_temp_en = read_int(12*2);
   buzz_always = read_int(13*2);
-  buzz_volume = read_int(14*2);
+  buzz_volume = 0;//read_int(14*2);
   flight_start_filter = read_int(15*2);
   flight_time = !flight? (unsigned int) read_int(16*2) : flight_time;
   total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
@@ -677,77 +712,15 @@ buzz_volume = 50;
 flight_start_filter = 4000;
 }
 
-void buzzer(int freq, bool buzblink)
-{
-  if (!buzz_en || !buzblink)
-    {
-    //PWM_square_D9(freq);// + (vario_average - vario_average%10)*2 - 20);
-    //pwm = SetPinFrequencySafe(9,freq);
-    PWM_frequency(9, freq, CORRECT_PWM);
-    //pwmWrite(9, 128);
-    PWM_set(9, buzz_volume);
-    buzz_en = 1;
-    }
-  else
-    {
-    //PWM_default(9);
-    //pwmWrite(9, 0);
-    PWM_set(9, 0);
-    buzz_en = 0;
-    }
-}
+/* ************************************************************ */
 
 float read_voltage()
 {
+  digitalWrite(battery_tr_pin,1);
   batt_average = 0.95 * batt_average + 0.05 * ((float) analogRead(battery_pin)) * 2 * 3.3 / 1024;
-  //float batt_average = 0;
-  //batt_array[batt_array_pointer] = ((float) analogRead(battery_pin)) * 2 * 3.3 / 1024;
-  //batt_array_pointer = (batt_array_pointer < 7)? batt_array_pointer + 1 : 0;
-  //for(int i = 0; i < 8; i++)
-  //  batt_average += batt_array[i];
-  //return batt_average / 8 ;
-  
+  digitalWrite(battery_tr_pin,0);
+
   return batt_average ;
-}
-
-void sleep()
-{
-  unsigned long start_sleep = millis();
-  int ii = 0;
-  while (millis() < start_sleep + 120/DIV_FACTOR) {
-    LowPower.idle(SLEEP_60MS, ADC_OFF, TIMER2_OFF, TIMER1_ON, TIMER0_ON, SPI_OFF, USART0_ON, TWI_OFF);
-    ii++;
-    }
-  //Serial.println(ii);
-}
-*/
-
-//void buzz_set_volume(int in_dat, int max_vol)
-//{
-//  int volume = (in_dat == 0)? max_vol : in_dat;
-//  int freq = 700;
-//  buzz_volume = in_dat;
-//  for (int i = 0; i < 5; i++) {
-//    PWM_frequency(9, freq, CORRECT_PWM);
-//    PWM_set(9, volume);
-//    delay(60 / DIV_FACTOR);
-//    PWM_set(9, 0);
-//    delay(60 / DIV_FACTOR);
-//    if (in_dat == 0) {
-//      volume -= 40;
-//      freq -= 40;
-//    }
-//  }
-//}
-
-void buzz_end_of_flight(int buzz_vol)
-{
-  PWM_set(9, buzz_vol);
-  for (int i = 0; i < 50; i++) {
-    PWM_frequency(9, 700-i*8, CORRECT_PWM);//FAST_PWM);
-    delay(10);
-  }
-  PWM_set(9, 0);
 }
 
 //void press_button() {
