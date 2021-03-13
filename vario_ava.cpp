@@ -630,6 +630,7 @@ int buzz_volume;
 int flight_time;
 unsigned int total_flight_time;
 unsigned int flight_start_filter;
+unsigned int flight_stop_filter;
 int battery_calibration;
 unsigned int working_time, total_working_time;
 
@@ -661,6 +662,8 @@ void update_params()
   update_int(17*2,total_flight_time);
   update_int(18*2,battery_calibration);
   update_int(19*2,total_working_time);
+  update_int(20*2,flight_stop_filter);
+
 }
 
 int read_int(int addr)
@@ -690,6 +693,7 @@ void read_params()
   total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
   battery_calibration = read_int(18*2);
   total_working_time = (unsigned int) read_int(19*2);
+  flight_start_filter = read_int(20*2);
 }
 
 void default_params()
@@ -710,6 +714,7 @@ bat_temp_en = 0;
 buzz_always = 0;
 buzz_volume = 50;
 flight_start_filter = 4000;
+flight_stop_filter = 30;
 }
 
 /* ************************************************************ */

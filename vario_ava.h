@@ -205,12 +205,13 @@ p15 - flight_start_filter, ms (4000)\n\
 p16 - flight_time, min\n\
 p17 - total_flight_time, min\n\
 p19 - total_working_time, min\n\
+p20 - flight_stop_filter, min (30)\n\
 Example: \"p0=20\"\n\n\
 \"default\": reset to default values\n\n\
 \"calibrate\": use this command after fully charging the battery\n\n\
 \"report\": report current values\n\n\
 \"exit\": exit without save\n\n\
-\"save\": save end exit\n"};
+\"save\": save & exit\n"};
 
 const byte moo_message[] PROGMEM = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 95, 95, 41, 10, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 111, 111, 41, 10, 32, 32, 32, 32, 47, 45, 45, 45, 45, 45, 45, 92, 47, 10, 32, 32, 47, 32, 124, 32, 32, 32, 32, 32, 32, 124, 124, 10, 32, 42, 32, 47, 92, 45, 45, 45, 47, 92, 10, 32, 126, 126, 126, 126, 126, 126, 126, 126, 10, 46, 46, 46, 34, 72, 97, 118, 101, 32, 121, 111, 117, 32, 109, 111, 111, 101, 100, 32, 116, 111, 100, 97, 121, 63, 34, 46, 46, 46};
 const byte paramoo_message[] PROGMEM = {95, 46, 46, 126, 126, 42, 42, 42, 42, 126, 126, 46, 46, 95, 10, 32, 32, 32, 32, 32, 92, 47, 32, 32, 32, 32, 32, 32, 32, 32, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 32, 32, 40, 95, 95, 41, 10, 32, 32, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 40, 45, 32, 45, 41, 10, 32, 32, 32, 42, 45, 45, 45, 44, 45, 45, 45, 45, 45, 45, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 32, 124, 32, 32, 32, 32, 32, 32, 124, 124, 10, 32, 32, 32, 32, 32, 32, 32, 47, 92, 45, 45, 45, 47, 92};
@@ -243,6 +244,7 @@ extern unsigned int total_flight_time;
 extern unsigned int flight_start_filter;
 extern int battery_calibration;
 extern unsigned int working_time, total_working_time;
+extern unsigned int flight_stop_filter;
 
 void update_int(int addr, int val);
 void update_params();
