@@ -600,12 +600,14 @@ float PWM_square_D9(float frequency) {
 
 void buzz_end_of_flight(int buzz_vol)
 {
+  freq_shift_off();
   PWM_set(9, buzz_vol);
   for (int i = 0; i < 50; i++) {
     PWM_frequency(9, 700-i*8, CORRECT_PWM);//FAST_PWM);
-    delay(10);
+    delay(10/DIV_FACTOR);
   }
   PWM_set(9, 0);
+  freq_shift_on();
 }
 
 /* ********************************************************************** */
@@ -693,7 +695,7 @@ void read_params()
   total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
   battery_calibration = read_int(18*2);
   total_working_time = (unsigned int) read_int(19*2);
-  flight_start_filter = read_int(20*2);
+  flight_stop_filter = read_int(20*2);
 }
 
 void default_params()

@@ -5,6 +5,16 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
+#define CLOCK_DIVIDE
+//#define INITIAL_EEPROM
+
+#ifdef CLOCK_DIVIDE
+ #define DIV_FACTOR 2
+ #define BT_SPEED 215000 //9600 // 38400
+#else
+ #define DIV_FACTOR 1
+ #define BT_SPEED 115200 //9600 // 38400
+#endif
 
 #define CORRECT_PWM 1
 #define FAST_PWM 0
@@ -217,6 +227,7 @@ const byte moo_message[] PROGMEM = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 
 const byte paramoo_message[] PROGMEM = {95, 46, 46, 126, 126, 42, 42, 42, 42, 126, 126, 46, 46, 95, 10, 32, 32, 32, 32, 32, 92, 47, 32, 32, 32, 32, 32, 32, 32, 32, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 32, 32, 40, 95, 95, 41, 10, 32, 32, 32, 32, 32, 32, 32, 32, 32, 92, 32, 32, 32, 32, 40, 45, 32, 45, 41, 10, 32, 32, 32, 42, 45, 45, 45, 44, 45, 45, 45, 45, 45, 45, 92, 47, 10, 32, 32, 32, 32, 32, 32, 32, 32, 124, 32, 32, 32, 32, 32, 32, 124, 124, 10, 32, 32, 32, 32, 32, 32, 32, 47, 92, 45, 45, 45, 47, 92};
 
 /* ********************************************************** */
+
 extern bool flight;
 extern int battery_tr_pin;
 extern float batt_average;
@@ -251,6 +262,8 @@ void update_params();
 int read_int(int addr);
 void read_params();
 void default_params();
+void freq_shift_on();
+void freq_shift_off();
 
 /* ********************************************************** */
 
