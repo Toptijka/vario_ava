@@ -618,7 +618,7 @@ int buzz_up_1_thres;
 int buzz_up_2_thres;
 int buzz_up_3_thres;
 int buzz_down_0_thres;
-int buzz_down_1_thres;
+unsigned int pwdown_time;
 int buzz_up_start_freq;
 int buzz_down_start_freq;
 int buzz_up_factor;
@@ -650,7 +650,7 @@ void update_params()
   update_int(3*2,buzz_up_2_thres);
   update_int(4*2,buzz_up_3_thres);
   update_int(5*2,buzz_down_0_thres);
-  update_int(6*2,buzz_down_1_thres);
+  update_int(6*2,pwdown_time);
   update_int(7*2,buzz_up_start_freq);
   update_int(8*2,buzz_down_start_freq);
   update_int(9*2,buzz_up_factor);
@@ -681,7 +681,7 @@ void read_params()
   buzz_up_2_thres = read_int(3*2);
   buzz_up_3_thres = read_int(4*2);
   buzz_down_0_thres = read_int(5*2);
-  buzz_down_1_thres = read_int(6*2);
+  pwdown_time = read_int(6*2);
   buzz_up_start_freq = read_int(7*2);
   buzz_down_start_freq = read_int(8*2);
   buzz_up_factor = read_int(9*2);
@@ -706,7 +706,7 @@ buzz_up_1_thres = 50;
 buzz_up_2_thres = 100;
 buzz_up_3_thres = 300;
 buzz_down_0_thres = -150;
-buzz_down_1_thres = -300;
+pwdown_time = 60;
 buzz_up_start_freq = 700;
 buzz_down_start_freq = 300;
 buzz_up_factor = 4;
@@ -716,7 +716,7 @@ bat_temp_en = 0;
 buzz_always = 0;
 buzz_volume = 50;
 flight_start_filter = 4000;
-flight_stop_filter = 30;
+flight_stop_filter = 60;
 }
 
 /* ************************************************************ */
@@ -729,6 +729,26 @@ float read_voltage()
 
   return batt_average ;
 }
+
+// void wait(int del)
+// {
+
+//   unsigned long start_sleep = millis();
+
+//   bool bb = 0;
+
+// do {
+// 	delay(10);
+// } while (millis() < start_sleep + 10);
+
+//   // while (millis() < start_sleep + 10) {
+//     // delay(100);
+//     // bb = 1;
+//     // power.sleep(SLEEP_128MS);
+//   // }
+//     delay(100);
+
+// }
 
 //void press_button() {
 //  button = 1;

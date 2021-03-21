@@ -55,7 +55,7 @@ AT+BAUDC—-1382400
 */
 
   //sendCommand(&bleSerial, "AT+ORGL");
-  sendCommand( "AT+BAUD0");
+  sendCommand( "AT+BAUD1");
 	sendCommand( "AT+ROLE3");	// slave mode
 	sendCommand( "AT+TYPE0");	// unsecure, no pin required
 	sendCommand( "AT+POWE3");	// max RF power

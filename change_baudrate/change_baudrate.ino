@@ -7,7 +7,7 @@
 // RX, TX
 SoftwareSerial mySerial(4,3);
 
-#define UART_SPEED 9600  // 2400 //57600 //115200 //19200 // 38400 //9600
+#define UART_SPEED 115200  // 2400 //57600 //115200 //19200 // 38400 //9600
 /*
 AT+BAUD1——-1200
 AT+BAUD2——-2400
@@ -51,7 +51,7 @@ void setup() {
 
   digitalWrite(7, HIGH);
 
-  Serial.begin(115200);
+  Serial.begin(57600);
 }
 
 void loop() {

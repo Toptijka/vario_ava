@@ -10,10 +10,10 @@
 
 #ifdef CLOCK_DIVIDE
  #define DIV_FACTOR 2
- #define BT_SPEED 215000 //9600 // 38400
+ #define BT_SPEED 115200 //215000 //9600 // 38400
 #else
  #define DIV_FACTOR 1
- #define BT_SPEED 115200 //9600 // 38400
+ #define BT_SPEED 57600 //115200 //9600 // 38400
 #endif
 
 #define CORRECT_PWM 1
@@ -202,7 +202,7 @@ p2 - buzz_up_1_thres, cm/s (50)\n\
 p3 - buzz_up_2_thres, cm/s (100)\n\
 p4 - buzz_up_3_thres, cm/s (300)\n\
 p5 - buzz_down_0_thres, cm/s (-150)\n\
-p6 - buzz_down_1_thres, cm/s (-300)\n\
+p6 - pwdown_time, min (60)\n\
 p7 - buzz_up_start_freq, Hz (700)\n\
 p8 - buzz_down_start_freq, Hz (300)\n\
 p9 - buzz_up_factor (4)\n\
@@ -215,7 +215,7 @@ p15 - flight_start_filter, ms (4000)\n\
 p16 - flight_time, min\n\
 p17 - total_flight_time, min\n\
 p19 - total_working_time, min\n\
-p20 - flight_stop_filter, min (30)\n\
+p20 - flight_stop_filter, s (60)\n\
 Example: \"p0=20\"\n\n\
 \"default\": reset to default values\n\n\
 \"calibrate\": use this command after fully charging the battery\n\n\
@@ -239,7 +239,7 @@ extern int buzz_up_1_thres;
 extern int buzz_up_2_thres;
 extern int buzz_up_3_thres;
 extern int buzz_down_0_thres;
-extern int buzz_down_1_thres;
+extern unsigned int pwdown_time;
 extern int buzz_up_start_freq;
 extern int buzz_down_start_freq;
 extern int buzz_up_factor;
@@ -268,5 +268,6 @@ void freq_shift_off();
 /* ********************************************************** */
 
 float read_voltage();
+// void wait(int del);
 
 #endif
