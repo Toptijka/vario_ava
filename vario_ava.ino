@@ -50,6 +50,7 @@ long Pressure = 101325;
 long Altitude;
 long average_pressure;
 int vario;
+long vario_average;
 const float p0 = 101325;              //Pressure at sea level (Pa)
 unsigned long get_time1 = 0;
 // unsigned long get_time2 = 0;
@@ -103,7 +104,7 @@ unsigned long time_start_working;
 
 bool buzz_en = 0;
 bool programming_mode = 0;
-bool bt_mode = 0;
+bool bt_connect = 0;
 bool flight = 0;
 bool sleep = 0;
 bool want_sleep = 0;
@@ -319,18 +320,8 @@ void freq_shift_off () {
 
 void loop(void)
 {
-  //LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
 
-  //LowPower.powerSave(SLEEP_120MS, ADC_OFF, BOD_OFF, TIMER2_ON);
-  //LowPower.idle(SLEEP_120MS, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
-  // wait();
-  //delay(120/DIV_FACTOR);
-
-// long vario_average = 0;
-  // vario_average = (analogRead(A2) - 80);
-//uart.println(millis());
-
-bt_mode = digitalRead(bt_stat_pin);
+bt_connect = digitalRead(bt_stat_pin);
 
 String rx_dat="";
 
@@ -353,7 +344,7 @@ vario = (analogRead(A2) - 100);
 time_old = time_new;
 alt_old = Altitude;
 
-if (!bt_mode || buzz_always != 0) {
+if (!bt_connect || buzz_always != 0) {
   buzz_array[buzz_array_pointer] = vario;
   if (buzz_array_pointer != buzz_size_array - 1) buzz_array_pointer++;
   else buzz_array_pointer = 0;
@@ -364,7 +355,7 @@ wait(1000/LOOPS - 5);
 }
 /* ********************** Data to tranceive ******************************** */
 else if (cnt_loop % (LOOPS/10) == 2) { // sending data time
-  if(bt_mode) {
+  if(bt_connect) {
     //PWM_default(9);
     //pwmWrite(9, 0);
     // PWM_set(9, 0);
@@ -403,79 +394,24 @@ if (cnt_loop >= LOOPS) cnt_loop = 1;
 else cnt_loop ++;
 /* ************************** Buzzer ********************************************* */
 
-long vario_average = 0;
+vario_average = 0;
 
-if (buzz_volume == 0) freq_shift_off();
-else if (!bt_mode || buzz_always != 0) {
-  freq_shift_on();
-
-  byte weight;
-
-  for (int i=0;i<buzz_size_array;i++)
-    {
-    if (i == buzz_array_pointer - 1) weight = cnt_loop % (LOOPS/10);
-    else if (i == buzz_array_pointer - 2) weight = LOOPS/10 - cnt_loop % (LOOPS/10);
-    else weight = LOOPS/10; // maximum of weight
-    vario_average += buzz_array[i] * weight;
-    }
-
-  vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
-
-  float log10_vario = log10(constrain(vario_average-buzz_up_0_thres,1,1000));
-  unsigned int wanted_freq = (flight_mode == st_up_0)? (unsigned int) (log10_vario*200)+buzz_up_start_freq :
-                                           buzz_down_start_freq + (vario_average+buzz_down_0_thres)/buzz_down_factor;
-
-  freq = constrain(wanted_freq, freq-3, freq+3);
-
-  buzz_period = (byte)(0.4*LOOPS) - (byte) (log10_vario * LOOPS/10) ;
-  // buzz_period = 40 - constrain((byte)sqrt(vario_average-buzz_up_0_thres), 0, 30) ;
-  // buzz_period = constrain((40 - (vario_average-buzz_up_0_thres) / 10), 10, 40) ;
-
-// uart.println(vario_average);
-// uart.println(freq);
-// uart.println(buzz_period);
-
-#ifdef CLOCK_DIVIDE
-update_freq = (freq > 256)? 8000000 / (freq * 2) : 1000000 / (freq * 2);
-#else
-update_freq = (freq > 256)? 8000000 / freq : 1000000 / freq;
-#endif
-
-  if (flight_mode == st_up_0 && buzz_cnt == 0/*&& (buzz_cnt > 4 || buzz_en)*/) {
-  buzzer(freq/**DIV_FACTOR*/,1);
-  // buzz_cnt = 0;
-  } else
-  if (flight_mode == st_down_0) {
-  buzzer(freq/**DIV_FACTOR*/,0);
-  } else
-  if (flight_mode == st_mute) PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
-
-  buzz_cnt = (buzz_cnt >= buzz_period)? 0 : buzz_cnt + 1;
-
-  // if      (vario_average >= buzz_up_3_thres && flight) flight_mode = st_up_3;
-  // else if (vario_average >= buzz_up_2_thres && flight) flight_mode = st_up_2;
-  // else if (vario_average >= buzz_up_1_thres && flight) flight_mode = st_up_1;
-  //else 
-  if (vario_average >= buzz_up_0_thres && flight) flight_mode = st_up_0;
-  else if (vario_average <= buzz_down_0_thres && flight) flight_mode = st_down_0;
-  else if (buzz_cnt == 0) flight_mode = st_mute;
-
-  if (flight_mode == st_mute) freq = buzz_up_start_freq;
-
-  } // bt_mode
-  //}
+buzzer();
 
 /* ********************** Flight filter and count ******************************** */
 
 if (cnt_loop % (LOOPS/10) == 1) {
   if ((vario_average < 30 && vario_average > -30) && !flight) time_flight_start = millis();
+  
   if (!flight)
     if (millis() > time_flight_start + flight_start_filter/DIV_FACTOR) {
       flight = 1;
       flight_time = 0;
     }
 
+  
   if ((vario_average > 30 && vario_average < -30) && flight) time_flight_stop = millis();
+  
   if (flight) {
     if (millis() > time_flight_stop + flight_stop_filter*1000/DIV_FACTOR) {
       flight = 0;
@@ -571,8 +507,9 @@ if(uart.available())
     //pwmWrite(9, 0);
     PWM_set(9, 0);
     programming_mode = 1;
-    for (int i = 0; i < strlen_P(welcome_message); i++)
-      uart.print((char)pgm_read_byte(&welcome_message[i]));
+    print_message(welcome_message);
+    //for (int i = 0; i < strlen_P(welcome_message); i++)
+      //uart.print((char)pgm_read_byte(&welcome_message[i]));
     }
   }
 }
@@ -690,7 +627,7 @@ if(uart.available())
 /* ********************** Change volume/flight/power mode ******************************** */
 
 if (want_sleep) {
-      buzz_end_of_flight(buzz_volume);
+    buzz_end_of_flight(buzz_volume);
     buzz_end_of_flight(buzz_volume);
     want_sleep = 0;
     pwr_down();
@@ -737,4 +674,68 @@ if (maybe_pwdown) {
 }
 
   
-}
+} // loop
+
+void buzzer() {
+if (buzz_volume == 0) freq_shift_off();
+else if (!bt_connect || buzz_always != 0) {
+  freq_shift_on();
+
+  byte weight;
+
+  for (int i=0;i<buzz_size_array;i++)
+    {
+    if (i == buzz_array_pointer - 1) weight = cnt_loop % (LOOPS/10);
+    else if (i == buzz_array_pointer - 2) weight = LOOPS/10 - cnt_loop % (LOOPS/10);
+    else weight = LOOPS/10; // maximum of weight
+    vario_average += buzz_array[i] * weight;
+    }
+
+  vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
+
+  float log10_vario = log10(constrain(vario_average-buzz_up_0_thres,1,1000));
+  unsigned int wanted_freq = (flight_mode == st_up_0)? (unsigned int) (log10_vario*200)+buzz_up_start_freq :
+                                           buzz_down_start_freq + (vario_average+buzz_down_0_thres)/buzz_down_factor;
+
+  freq = constrain(wanted_freq, freq-3, freq+3);
+
+  buzz_period = (byte)(0.4*LOOPS) - (byte) (log10_vario * LOOPS/10) ;
+
+// uart.println(vario_average);
+// uart.println(freq);
+// uart.println(buzz_period);
+
+  update_freq = (freq > 256)? 8000000 / (freq * DIV_FACTOR) : 1000000 / (freq * DIV_FACTOR);
+
+  if (flight_mode == st_up_0 && buzz_cnt == 0/*&& (buzz_cnt > 4 || buzz_en)*/) {
+  buzzer(freq/**DIV_FACTOR*/,1);
+  // buzz_cnt = 0;
+  } else
+  if (flight_mode == st_down_0) {
+  buzzer(freq/**DIV_FACTOR*/,0);
+  } else
+  if (flight_mode == st_mute) PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
+
+  buzz_cnt = (buzz_cnt >= buzz_period)? 0 : buzz_cnt + 1;
+
+  // if      (vario_average >= buzz_up_3_thres && flight) flight_mode = st_up_3;
+  // else if (vario_average >= buzz_up_2_thres && flight) flight_mode = st_up_2;
+  // else if (vario_average >= buzz_up_1_thres && flight) flight_mode = st_up_1;
+  //else 
+  if (vario_average >= buzz_up_0_thres && flight) flight_mode = st_up_0;
+  else if (vario_average <= buzz_down_0_thres && flight) flight_mode = st_down_0;
+  else if (buzz_cnt == 0) flight_mode = st_mute;
+
+  if (flight_mode == st_mute) freq = buzz_up_start_freq;
+
+  }
+
+} // Buzzer
+
+
+void print_message(const char * message) {
+
+  for (int i = 0; i < sizeof(message); i++)
+    uart.print((char)pgm_read_byte(&message[i]));
+
+} //print_message
