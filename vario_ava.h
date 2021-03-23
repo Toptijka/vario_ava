@@ -208,7 +208,7 @@ p8 - buzz_down_start_freq, Hz (300)\n\
 p9 - buzz_up_factor (4)\n\
 p10 - buzz_down_factor (8)\n\
 p11 - battery_alarm_level, % (40)\n\
-p12 - bat_temp_en (0)\n\
+p12 - display_temp (0)\n\
 p13 - buzz_always (0)\n\
 p14 - buzz_volume (200) [0-800]\n\
 p15 - flight_start_filter, ms (4000)\n\
@@ -245,7 +245,7 @@ extern int buzz_down_start_freq;
 extern int buzz_up_factor;
 extern int buzz_down_factor;
 extern int battery_alarm_level;
-extern int bat_temp_en;
+extern int display_temp;
 extern int buzz_always;
 extern int flight_total;
 extern int flight_last;

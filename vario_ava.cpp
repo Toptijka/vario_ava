@@ -328,6 +328,7 @@ void PWM_set(byte pin , unsigned int duty) { // имеем баг с тайме�
 		    }
 		}
 		if (duty == 0) {
+			TCCR1B &= 7; // DISABLE TIMER!!!!
 			TCCR1A &= ~(1 << COM1A1);
 			bitClear(PORTB, 1);
 		} else if (duty == (ICR1L + (ICR1H << 8)) ) {
@@ -624,7 +625,7 @@ int buzz_down_start_freq;
 int buzz_up_factor;
 int buzz_down_factor;
 int battery_alarm_level;
-int bat_temp_en;
+int display_temp;
 int buzz_always;
 int flight_total;
 int flight_last;
@@ -656,7 +657,7 @@ void update_params()
   update_int(9*2,buzz_up_factor);
   update_int(10*2,buzz_down_factor);
   update_int(11*2,battery_alarm_level);
-  update_int(12*2,bat_temp_en);
+  update_int(12*2,display_temp);
   update_int(13*2,buzz_always);
   update_int(14*2,buzz_volume);
   update_int(15*2,flight_start_filter);
@@ -687,7 +688,7 @@ void read_params()
   buzz_up_factor = read_int(9*2);
   buzz_down_factor = read_int(10*2);
   battery_alarm_level = read_int(11*2);
-  bat_temp_en = read_int(12*2);
+  display_temp = read_int(12*2);
   buzz_always = read_int(13*2);
   buzz_volume = 0;//read_int(14*2);
   flight_start_filter = read_int(15*2);
@@ -712,7 +713,7 @@ buzz_down_start_freq = 300;
 buzz_up_factor = 4;
 buzz_down_factor = 8;
 battery_alarm_level = 40;
-bat_temp_en = 0;
+display_temp = 0;
 buzz_always = 0;
 buzz_volume = 50;
 flight_start_filter = 4000;

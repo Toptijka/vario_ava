@@ -115,7 +115,7 @@ byte button_cnt = 0;
 
 GyverBME280 bme;
 
-void buzzer(unsigned int freq, bool buzblink)
+void buzz_flight(unsigned int freq, bool buzblink)
 {
   if (!buzz_en || !buzblink)
     {
@@ -192,6 +192,8 @@ void pwr_down() {
   sleep = 1;
   sensor_pwr_off();
   // power.setSystemPrescaler(PRESCALER_256);
+  buzz_end_of_flight(buzz_volume);
+  buzz_end_of_flight(buzz_volume);
   power.sleep(SLEEP_FOREVER);
 }
 
@@ -455,12 +457,12 @@ if (millis() > time_start_working + (working_time+1)*60000/DIV_FACTOR) {
   {
   Temperature = bme.readTemperature();
 
-  if (bat_temp_en == 2) {
+  if (display_temp == 2) {
     uart.print("$XCTOD,");
     uart.println(Temperature);
     }
   
-  if (replace_battery & bat_temp_en == 1)
+  if (replace_battery & display_temp == 1)
     {
     fake_battery = (float)Temperature;
     if (Temperature <= 0)
@@ -484,7 +486,7 @@ if (millis() > (get_time4 + 20000/DIV_FACTOR) && (int) battery_level < battery_a
   {
   freq_shift_off();
   for (int i=0 ; i<8 ; i++) {
-    buzzer(300,1);
+    buzz_flight(300,1);
     delay(50);
     }
   freq_shift_on();
@@ -537,7 +539,7 @@ if(uart.available())
   if (rx_dat.startsWith("p10=")) buzz_down_factor = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p11=")) battery_alarm_level = rx_dat.substring(4,rx_dat.length()-2).toInt();
   //if (rx_dat.startsWith("p12=")) battery_calibration = rx_dat.substring(4,rx_dat.length()-2).toInt();
-  if (rx_dat.startsWith("p12=")) bat_temp_en = rx_dat.substring(4,rx_dat.length()-2).toInt();
+  if (rx_dat.startsWith("p12=")) display_temp = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p13=")) buzz_always = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p14=")) {
     //buzz_volume = constrain(rx_dat.substring(4,rx_dat.length()-2).toInt(), 1, max_volume);
@@ -578,7 +580,7 @@ if(uart.available())
     uart.println("p10=" + String(buzz_down_factor,DEC));
     uart.println("p11=" + String(battery_alarm_level,DEC));
     //uart.println("p12=" + String(battery_calibration,DEC) + " {" + String((int)(4.2 * 100/read_voltage()),DEC) +"}");
-    uart.println("p12=" + String(bat_temp_en,DEC));
+    uart.println("p12=" + String(display_temp,DEC));
     uart.println("p13=" + String(buzz_always!=0,DEC));
     uart.println("p14=" + String(buzz_volume,DEC));
     uart.println("p15=" + String(flight_start_filter,DEC));
@@ -611,14 +613,16 @@ if(uart.available())
 
   if (rx_dat.startsWith("moo")) {
     paramoo = 1;
-    for (int i = 0; i < sizeof(moo_message); i++)
-      uart.print((char)pgm_read_byte(&moo_message[i]));
+    print_message(moo_message);
+    //for (int i = 0; i < sizeof(moo_message); i++)
+      //uart.print((char)pgm_read_byte(&moo_message[i]));
   }
 
   if (rx_dat.startsWith("yes") && paramoo) {
     paramoo = 0;
-    for (int i = 0; i < sizeof(paramoo_message); i++)
-      uart.print((char)pgm_read_byte(&paramoo_message[i]));
+    print_message(paramoo_message);
+    //for (int i = 0; i < sizeof(paramoo_message); i++)
+      //uart.print((char)pgm_read_byte(&paramoo_message[i]));
   }
 
   }
@@ -627,12 +631,11 @@ if(uart.available())
 /* ********************** Change volume/flight/power mode ******************************** */
 
 if (want_sleep) {
-    buzz_end_of_flight(buzz_volume);
-    buzz_end_of_flight(buzz_volume);
-    want_sleep = 0;
-    pwr_down();
-    
-if (sleep && (millis() - button_time) > 1000) pwr_down();
+  want_sleep = 0;
+  pwr_down();
+  }
+
+//if (sleep && (millis() - button_time) > 1000) pwr_down();
 
 if (button) {
   if (digitalRead(button_pin)) {
@@ -662,17 +665,13 @@ if (button) {
 
 if (maybe_pwdown) {
   if (millis() > button_time + 6000 / DIV_FACTOR) {
-    buzz_end_of_flight(buzz_volume);
-    buzz_end_of_flight(buzz_volume);
     maybe_pwdown = 0;
     pwr_down();
   }
 
 }
 
-  if (digitalRead(button_pin)) maybe_pwdown = 0;
-}
-
+if (digitalRead(button_pin)) maybe_pwdown = 0;
   
 } // loop
 
@@ -708,11 +707,11 @@ else if (!bt_connect || buzz_always != 0) {
   update_freq = (freq > 256)? 8000000 / (freq * DIV_FACTOR) : 1000000 / (freq * DIV_FACTOR);
 
   if (flight_mode == st_up_0 && buzz_cnt == 0/*&& (buzz_cnt > 4 || buzz_en)*/) {
-  buzzer(freq/**DIV_FACTOR*/,1);
+  buzz_flight(freq/**DIV_FACTOR*/,1);
   // buzz_cnt = 0;
   } else
   if (flight_mode == st_down_0) {
-  buzzer(freq/**DIV_FACTOR*/,0);
+  buzz_flight(freq/**DIV_FACTOR*/,0);
   } else
   if (flight_mode == st_mute) PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
 
@@ -735,7 +734,9 @@ else if (!bt_connect || buzz_always != 0) {
 
 void print_message(const char * message) {
 
-  for (int i = 0; i < sizeof(message); i++)
+  for (int i = 0; i < sizeof(message); i++) {
     uart.print((char)pgm_read_byte(&message[i]));
+    if (i % 64 == 63) delay(100 / DIV_FACTOR);
+  }
 
 } //print_message
