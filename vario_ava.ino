@@ -80,7 +80,9 @@ float batt_average;
 
 #define buzz_max_array 100
 #define alt_max_array 50
-#define max_volume 800 //350
+// #define MAX_VOLUME 800
+// #define MED_VOLUME 300
+// #define MIN_VOLUME 150
 
 bool paramoo = 0;
 
@@ -130,7 +132,8 @@ void buzz_flight(unsigned int freq, bool buzblink)
     {
     //PWM_default(9);
     //pwmWrite(9, 0);
-    PWM_set(9, 0);
+    disable_timer();
+    // PWM_set(9, 0);
     buzz_en = 0;
     }
 }
@@ -154,14 +157,15 @@ int ii = 0;
 void buzz_set_volume(int in_dat)
 {
   freq_shift_off();
-  int volume = (in_dat == 0)? max_volume : in_dat;
+  int volume = (in_dat == 0)? MAX_VOLUME : in_dat;
   unsigned int freq = 700;
   buzz_volume = in_dat;
   for (int i = 0; i < 5; i++) {
     PWM_frequency(9, freq, CORRECT_PWM);
     PWM_set(9, volume);
     delay(60 / DIV_FACTOR);
-    PWM_set(9, 0);
+    // PWM_set(9, 0);
+    disable_timer();
     delay(60 / DIV_FACTOR);
     if (in_dat == 0) {
       volume -= 40;
@@ -231,7 +235,8 @@ freq_shift_off();
 PWM_frequency(9, 3000/**DIV_FACTOR*/, CORRECT_PWM);
 PWM_set(9, 300);//buzz_volume);
 delay(500/DIV_FACTOR);
-PWM_set(9, 0);
+// PWM_set(9, 0);
+disable_timer();
 freq_shift_on();
 }
 
@@ -294,30 +299,7 @@ freq_shift_on();
 }
 
 ISR(TIMER1_OVF_vect) {
-  // freq_shift_off();
-  // uart.println("t");
   freq_shift();
-}
-
-void freq_shift () {
-  // we need to read low byte first and then upper byte.
-  // unsigned int period = (unsigned int) ICR1L | ((unsigned int) ICR1H << 8);
-  // uart.println(period);
-  // uart.println(ICR1);
-  // uart.println(ICR1L);
-  // uart.println(ICR1H);
-  // period = constrain(period,5000,65535);
-  ICR1 = update_freq;// ICR1 - 5;
-  // ICR1H = highByte(period);
-  // ICR1L = lowByte(period);
-}
-
-void freq_shift_on () {
-  TIMSK1 |= (1 << TOIE1);
-}
-
-void freq_shift_off () {
-  TIMSK1 &= ~(1 << TOIE1);
 }
 
 void loop(void)
@@ -430,18 +412,10 @@ if (cnt_loop % (LOOPS/10) == 1) {
   }
 
 if (flight) time_end_of_flight = millis();
-else if(millis() > time_end_of_flight + 5000/DIV_FACTOR) {
-// else if(millis() > time_end_of_flight + pwdown_time*60000/DIV_FACTOR) {
+else if(millis() > time_end_of_flight + pwdown_time*60000/DIV_FACTOR) {
     time_end_of_flight = millis();
     want_sleep = 1;
 }
-
-  // if ((vario_average > 30 && vario_average < -30) && !flight) time_flight_stop = millis();
-  // if (flight) {
-    // if (millis() > time_flight_stop + flight_stop_filter*60000/DIV_FACTOR) {
-      // flight = 0;
-      // pwr_down();
-    // }
 
 /* **************************** Working time ************************************* */
 
@@ -507,9 +481,10 @@ if(uart.available())
     {
     //PWM_default(9);
     //pwmWrite(9, 0);
-    PWM_set(9, 0);
+    // PWM_set(9, 0);
+    disable_timer();
     programming_mode = 1;
-    print_message(welcome_message);
+    print_message(welcome_message,strlen_P(welcome_message));
     //for (int i = 0; i < strlen_P(welcome_message); i++)
       //uart.print((char)pgm_read_byte(&welcome_message[i]));
     }
@@ -538,14 +513,9 @@ if(uart.available())
   if (rx_dat.startsWith("p9=")) buzz_up_factor = rx_dat.substring(3,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p10=")) buzz_down_factor = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p11=")) battery_alarm_level = rx_dat.substring(4,rx_dat.length()-2).toInt();
-  //if (rx_dat.startsWith("p12=")) battery_calibration = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p12=")) display_temp = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p13=")) buzz_always = rx_dat.substring(4,rx_dat.length()-2).toInt();
-  if (rx_dat.startsWith("p14=")) {
-    //buzz_volume = constrain(rx_dat.substring(4,rx_dat.length()-2).toInt(), 1, max_volume);
-    buzz_set_volume(constrain(rx_dat.substring(4,rx_dat.length()-2).toInt(), 0, max_volume));
-
-    }
+  if (rx_dat.startsWith("p14=")) buzz_set_volume(constrain(rx_dat.substring(4,rx_dat.length()-2).toInt(), 0, MAX_VOLUME));
   if (rx_dat.startsWith("p15=")) flight_start_filter = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p16=")) flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p17=")) total_flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
@@ -577,9 +547,9 @@ if(uart.available())
     uart.println("p7=" + String(buzz_up_start_freq,DEC));
     uart.println("p8=" + String(buzz_down_start_freq,DEC));
     uart.println("p9=" + String(buzz_up_factor,DEC));
+    delay(100);
     uart.println("p10=" + String(buzz_down_factor,DEC));
     uart.println("p11=" + String(battery_alarm_level,DEC));
-    //uart.println("p12=" + String(battery_calibration,DEC) + " {" + String((int)(4.2 * 100/read_voltage()),DEC) +"}");
     uart.println("p12=" + String(display_temp,DEC));
     uart.println("p13=" + String(buzz_always!=0,DEC));
     uart.println("p14=" + String(buzz_volume,DEC));
@@ -591,11 +561,11 @@ if(uart.available())
     }
 
   
-  if (rx_dat.startsWith("help"))
-    for (int i = 0; i < strlen_P(help_message); i++)
-      uart.print((char)pgm_read_byte(&help_message[i]));
+  if (rx_dat.startsWith("help")) print_message(help_message, strlen_P(help_message));
+    // for (int i = 0; i < strlen_P(help_message); i++)
+      // uart.print((char)pgm_read_byte(&help_message[i]));
 
-  if (rx_dat.startsWith("exit")) {
+  if (rx_dat.startsWith("exit") || !bt_connect) {
     read_params();
     programming_mode = 0;
   }
@@ -613,14 +583,14 @@ if(uart.available())
 
   if (rx_dat.startsWith("moo")) {
     paramoo = 1;
-    print_message(moo_message);
+    print_message(moo_message,sizeof(moo_message));
     //for (int i = 0; i < sizeof(moo_message); i++)
       //uart.print((char)pgm_read_byte(&moo_message[i]));
   }
 
   if (rx_dat.startsWith("yes") && paramoo) {
     paramoo = 0;
-    print_message(paramoo_message);
+    print_message(paramoo_message,sizeof(paramoo_message));
     //for (int i = 0; i < sizeof(paramoo_message); i++)
       //uart.print((char)pgm_read_byte(&paramoo_message[i]));
   }
@@ -635,7 +605,7 @@ if (want_sleep) {
   pwr_down();
   }
 
-//if (sleep && (millis() - button_time) > 1000) pwr_down();
+if (sleep && (millis() - button_time) > 1000) pwr_down();
 
 if (button) {
   if (digitalRead(button_pin)) {
@@ -648,9 +618,9 @@ if (button) {
       button_cnt++ ;
       button = 0;
     }
-    else if (buzz_volume < 150) buzz_set_volume(150);
-    else if (buzz_volume < 300) buzz_set_volume(300);
-    else if (buzz_volume < max_volume) buzz_set_volume(max_volume);
+    else if (buzz_volume < MIN_VOLUME) buzz_set_volume(MIN_VOLUME);
+    else if (buzz_volume < MED_VOLUME) buzz_set_volume(MED_VOLUME);
+    else if (buzz_volume < MAX_VOLUME) buzz_set_volume(MAX_VOLUME);
     else buzz_set_volume(0);
     button = 0;
   }
@@ -713,7 +683,7 @@ else if (!bt_connect || buzz_always != 0) {
   if (flight_mode == st_down_0) {
   buzz_flight(freq/**DIV_FACTOR*/,0);
   } else
-  if (flight_mode == st_mute) PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
+  if (flight_mode == st_mute) disable_timer(); //PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
 
   buzz_cnt = (buzz_cnt >= buzz_period)? 0 : buzz_cnt + 1;
 
@@ -732,9 +702,9 @@ else if (!bt_connect || buzz_always != 0) {
 } // Buzzer
 
 
-void print_message(const char * message) {
+void print_message(const char * message, int size) {
 
-  for (int i = 0; i < sizeof(message); i++) {
+  for (int i = 0; i < size; i++) {
     uart.print((char)pgm_read_byte(&message[i]));
     if (i % 64 == 63) delay(100 / DIV_FACTOR);
   }

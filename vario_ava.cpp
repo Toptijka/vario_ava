@@ -328,7 +328,6 @@ void PWM_set(byte pin , unsigned int duty) { // имеем баг с тайме�
 		    }
 		}
 		if (duty == 0) {
-			TCCR1B &= 7; // DISABLE TIMER!!!!
 			TCCR1A &= ~(1 << COM1A1);
 			bitClear(PORTB, 1);
 		} else if (duty == (ICR1L + (ICR1H << 8)) ) {
@@ -599,15 +598,32 @@ float PWM_square_D9(float frequency) {
 
 /* **************************** my funcs ********************************** */
 
+void freq_shift_on () {
+  TIMSK1 |= (1 << TOIE1);
+}
+
+void freq_shift_off () {
+  TIMSK1 &= ~(1 << TOIE1);
+}
+
+void freq_shift () {
+  ICR1 = update_freq;
+}
+
+void disable_timer () {
+  TCCR1B = 0;
+}
+
 void buzz_end_of_flight(int buzz_vol)
 {
   freq_shift_off();
-  PWM_set(9, buzz_vol);
+  PWM_set(9, constrain(buzz_vol, MIN_VOLUME, MAX_VOLUME));
   for (int i = 0; i < 50; i++) {
     PWM_frequency(9, 700-i*8, CORRECT_PWM);//FAST_PWM);
     delay(10/DIV_FACTOR);
   }
-  PWM_set(9, 0);
+  // PWM_set(9, 0);
+  disable_timer();
   freq_shift_on();
 }
 

@@ -16,6 +16,13 @@
  #define BT_SPEED 57600 //115200 //9600 // 38400
 #endif
 
+#define MAX_VOLUME 800
+#define MED_VOLUME 300
+#define MIN_VOLUME 150
+
+
+
+
 #define CORRECT_PWM 1
 #define FAST_PWM 0
 
@@ -188,7 +195,10 @@ void PWM_TMR1_10BIT();	// Установить таймер 1 (ШИМ на D9 и
 
 
 /* **************************** my funcs ********************************** */
-
+void freq_shift_on ();
+void freq_shift_off ();
+void freq_shift ();
+void disable_timer ();
 void buzz_end_of_flight(int buzz_vol);
 
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
@@ -256,6 +266,7 @@ extern unsigned int flight_start_filter;
 extern int battery_calibration;
 extern unsigned int working_time, total_working_time;
 extern unsigned int flight_stop_filter;
+extern volatile unsigned int update_freq;
 
 void update_int(int addr, int val);
 void update_params();
