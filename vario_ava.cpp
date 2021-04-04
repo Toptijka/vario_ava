@@ -607,24 +607,28 @@ void freq_shift_off () {
 }
 
 void freq_shift () {
-  ICR1 = update_freq;
+  // ICR1 = update_freq;
+  ICR1 += fshift;
 }
 
 void disable_timer () {
+  freq_shift_off();
+  TCCR1A = 0;
   TCCR1B = 0;
 }
 
-void buzz_end_of_flight(int buzz_vol)
+void buzz_end_of_flight(int in_dat)
 {
   freq_shift_off();
-  PWM_set(9, constrain(buzz_vol, MIN_VOLUME, MAX_VOLUME));
+  int buzz_vol = constrain(in_dat, MIN_VOLUME, MAX_VOLUME);
   for (int i = 0; i < 50; i++) {
     PWM_frequency(9, 700-i*8, CORRECT_PWM);//FAST_PWM);
+    PWM_set(9, buzz_vol);
     delay(10/DIV_FACTOR);
   }
   // PWM_set(9, 0);
   disable_timer();
-  freq_shift_on();
+  // freq_shift_on();
 }
 
 /* ********************************************************************** */
@@ -724,7 +728,7 @@ buzz_up_2_thres = 100;
 buzz_up_3_thres = 300;
 buzz_down_0_thres = -150;
 pwdown_time = 60;
-buzz_up_start_freq = 700;
+buzz_up_start_freq = 400;
 buzz_down_start_freq = 300;
 buzz_up_factor = 4;
 buzz_down_factor = 8;

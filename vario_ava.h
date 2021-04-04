@@ -199,7 +199,7 @@ void freq_shift_on ();
 void freq_shift_off ();
 void freq_shift ();
 void disable_timer ();
-void buzz_end_of_flight(int buzz_vol);
+void buzz_end_of_flight(int in_dat);
 
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
@@ -213,7 +213,7 @@ p3 - buzz_up_2_thres, cm/s (100)\n\
 p4 - buzz_up_3_thres, cm/s (300)\n\
 p5 - buzz_down_0_thres, cm/s (-150)\n\
 p6 - pwdown_time, min (60)\n\
-p7 - buzz_up_start_freq, Hz (700)\n\
+p7 - buzz_up_start_freq, Hz (400)\n\
 p8 - buzz_down_start_freq, Hz (300)\n\
 p9 - buzz_up_factor (4)\n\
 p10 - buzz_down_factor (8)\n\
@@ -267,6 +267,7 @@ extern int battery_calibration;
 extern unsigned int working_time, total_working_time;
 extern unsigned int flight_stop_filter;
 extern volatile unsigned int update_freq;
+extern volatile int fshift;
 
 void update_int(int addr, int val);
 void update_params();

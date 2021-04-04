@@ -51,6 +51,8 @@ long Altitude;
 long average_pressure;
 int vario;
 long vario_average;
+float vario_filtered;
+long vario_average_old;
 const float p0 = 101325;              //Pressure at sea level (Pa)
 unsigned long get_time1 = 0;
 // unsigned long get_time2 = 0;
@@ -63,6 +65,8 @@ volatile boolean maybe_pwdown = false;
 volatile boolean change_volume = false;
 volatile boolean change_flight = false;
 volatile unsigned int update_freq = 0xffff;
+volatile unsigned int update_duty = 0xffff;
+volatile int fshift = 0;
 
 unsigned int freq;
 
@@ -79,7 +83,7 @@ int fake_battery;
 float batt_average;
 
 #define buzz_max_array 100
-#define alt_max_array 50
+// #define alt_max_array 50
 // #define MAX_VOLUME 800
 // #define MED_VOLUME 300
 // #define MIN_VOLUME 150
@@ -92,9 +96,10 @@ bool paramoo = 0;
 
 int buzz_array[buzz_max_array];
 int buzz_array_pointer = 0;
+int buzz_volume_up;
 byte buzz_cnt = 0;
 byte buzz_period = 7;
-enum flight_mode {st_mute, st_down_0, st_down_1, st_up_0, st_up_1, st_up_2, st_up_3};
+enum flight_mode {st_mute, st_down_0, st_down_1, st_up_0, st_up_1, st_up_2, st_up_3, st_buzzzz};
 flight_mode flight_mode = st_mute;
 unsigned long time_old, time_new;
 long alt_old;
@@ -172,7 +177,7 @@ void buzz_set_volume(int in_dat)
       freq -= 40;
     }
   }
-  freq_shift_on();
+  // freq_shift_on();
 }
 
 void press_button() {
@@ -186,7 +191,10 @@ void bme_init() {
   bme.setTempOversampling(OVERSAMPLING_8);
   bme.setPressOversampling(OVERSAMPLING_16);
   bme.setStandbyTime(STANDBY_500US);
-  if(!bme.begin()) while (1);
+  if(!bme.begin()) while (1) {
+    uart.println("Where is BMP280?!");
+    delay(1000);
+    };
 }
 
 
@@ -195,7 +203,7 @@ void pwr_down() {
   button_cnt = 0;
   sleep = 1;
   sensor_pwr_off();
-  // power.setSystemPrescaler(PRESCALER_256);
+  disable_timer();
   buzz_end_of_flight(buzz_volume);
   buzz_end_of_flight(buzz_volume);
   power.sleep(SLEEP_FOREVER);
@@ -225,7 +233,7 @@ bme_init();
 uart.println(F("bmp280!!!"));
 power.setSleepMode(IDLE_SLEEP);
 time_end_of_flight = millis();
-// power.hardwareEnable(PWR_TIMER0);
+vario_filtered = 0;
 
 }
 
@@ -237,7 +245,7 @@ PWM_set(9, 300);//buzz_volume);
 delay(500/DIV_FACTOR);
 // PWM_set(9, 0);
 disable_timer();
-freq_shift_on();
+// freq_shift_on();
 }
 
 void setup()
@@ -294,12 +302,17 @@ working_time = 0;
 
 // delay (1000);
 
-freq_shift_on();
+// freq_shift_on();
 
 }
 
 ISR(TIMER1_OVF_vect) {
-  freq_shift();
+  // OCR1A = OCR1A + 1;//update_duty;
+      //   OCR1AH = highByte(duty);
+      // OCR1AL = lowByte(duty);
+  ICR1 = update_freq;
+  // ICR1 += fshift;
+  // freq_shift();
 }
 
 void loop(void)
@@ -328,7 +341,7 @@ vario = (analogRead(A2) - 100);
 time_old = time_new;
 alt_old = Altitude;
 
-if (!bt_connect || buzz_always != 0) {
+if (bt_connect || buzz_always != 0) {
   buzz_array[buzz_array_pointer] = vario;
   if (buzz_array_pointer != buzz_size_array - 1) buzz_array_pointer++;
   else buzz_array_pointer = 0;
@@ -385,7 +398,10 @@ buzzer();
 /* ********************** Flight filter and count ******************************** */
 
 if (cnt_loop % (LOOPS/10) == 1) {
-  if ((vario_average < 30 && vario_average > -30) && !flight) time_flight_start = millis();
+
+  vario_filtered = vario_filtered * 15 / 16 + (float)vario / 16;
+
+  if ((vario_filtered < 20 && vario_filtered > -20) && !flight) time_flight_start = millis();
   
   if (!flight)
     if (millis() > time_flight_start + flight_start_filter/DIV_FACTOR) {
@@ -394,12 +410,16 @@ if (cnt_loop % (LOOPS/10) == 1) {
     }
 
   
-  if ((vario_average > 30 && vario_average < -30) && flight) time_flight_stop = millis();
+  if ((vario_filtered > 20 || vario_filtered < -20) && flight) time_flight_stop = millis();
   
   if (flight) {
     if (millis() > time_flight_stop + flight_stop_filter*1000/DIV_FACTOR) {
+      uart.println(millis());
+      uart.println(time_flight_stop);
+      uart.println(flight);
       flight = 0;
       buzz_end_of_flight(buzz_volume);
+      uart.println(flight);
     }
 
     if (millis() > time_flight_start + (flight_time+1)*60000/DIV_FACTOR) {
@@ -463,7 +483,7 @@ if (millis() > (get_time4 + 20000/DIV_FACTOR) && (int) battery_level < battery_a
     buzz_flight(300,1);
     delay(50);
     }
-  freq_shift_on();
+  // freq_shift_on();
 
   get_time4 = millis();
   }
@@ -627,6 +647,7 @@ if (button) {
   else if (millis() > button_time + 3000 / DIV_FACTOR) {
     flight = 0;
     uart.println(buzz_volume);
+    uart.println(constrain(buzz_volume, MIN_VOLUME, MAX_VOLUME));
     buzz_end_of_flight(buzz_volume);
     button = 0;
     maybe_pwdown = 1;
@@ -636,6 +657,8 @@ if (button) {
 if (maybe_pwdown) {
   if (millis() > button_time + 6000 / DIV_FACTOR) {
     maybe_pwdown = 0;
+    uart.println(buzz_volume);
+    uart.println(constrain(buzz_volume, MIN_VOLUME, MAX_VOLUME));
     pwr_down();
   }
 
@@ -646,9 +669,9 @@ if (digitalRead(button_pin)) maybe_pwdown = 0;
 } // loop
 
 void buzzer() {
-if (buzz_volume == 0) freq_shift_off();
-else if (!bt_connect || buzz_always != 0) {
-  freq_shift_on();
+if (buzz_volume == 0) disable_timer();
+else if (/*bt_connect || */buzz_always != 0) {
+  // freq_shift_on();
 
   byte weight;
 
@@ -662,11 +685,11 @@ else if (!bt_connect || buzz_always != 0) {
 
   vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
 
-  float log10_vario = log10(constrain(vario_average-buzz_up_0_thres,1,1000));
+  float log10_vario = log10(constrain(vario_average/*-buzz_up_0_thres*/,1,1000));
   unsigned int wanted_freq = (flight_mode == st_up_0)? (unsigned int) (log10_vario*200)+buzz_up_start_freq :
-                                           buzz_down_start_freq + (vario_average+buzz_down_0_thres)/buzz_down_factor;
+                                           constrain((buzz_down_start_freq + (vario_average+buzz_down_0_thres)/buzz_down_factor),1,buzz_down_start_freq);
 
-  freq = constrain(wanted_freq, freq-3, freq+3);
+  freq = constrain(wanted_freq, freq-1, freq+1);
 
   buzz_period = (byte)(0.4*LOOPS) - (byte) (log10_vario * LOOPS/10) ;
 
@@ -676,14 +699,21 @@ else if (!bt_connect || buzz_always != 0) {
 
   update_freq = (freq > 256)? 8000000 / (freq * DIV_FACTOR) : 1000000 / (freq * DIV_FACTOR);
 
-  if (flight_mode == st_up_0 && buzz_cnt == 0/*&& (buzz_cnt > 4 || buzz_en)*/) {
-  buzz_flight(freq/**DIV_FACTOR*/,1);
-  // buzz_cnt = 0;
-  } else
-  if (flight_mode == st_down_0) {
+  if(buzz_cnt >= 5) update_duty = (TCCR1B == 0b00010001)? buzz_volume/DIV_FACTOR : buzz_volume/(DIV_FACTOR*8);
+  else update_duty = (TCCR1B == 0b00010001)? buzz_cnt*buzz_volume/(DIV_FACTOR*5) : buzz_cnt*buzz_volume/(DIV_FACTOR*8*5);
+
+  if (flight_mode == st_up_0 && buzz_cnt == 0) {
+    freq_shift_on();
+    buzz_flight(freq/**DIV_FACTOR*/,1);
+    // buzz_volume_up = buzz_volume * ;
+  } else if (flight_mode == st_buzzzz) {
+    // freq_shift_on();
+    buzz_flight(freq/**DIV_FACTOR*/,1);
+  } else if (flight_mode == st_down_0) {
+  freq_shift_off();
   buzz_flight(freq/**DIV_FACTOR*/,0);
   } else
-  if (flight_mode == st_mute) disable_timer(); //PWM_set(9, 0);//pwmWrite(9, 0);//PWM_default(9);
+  if (flight_mode == st_mute) disable_timer();
 
   buzz_cnt = (buzz_cnt >= buzz_period)? 0 : buzz_cnt + 1;
 
@@ -691,11 +721,21 @@ else if (!bt_connect || buzz_always != 0) {
   // else if (vario_average >= buzz_up_2_thres && flight) flight_mode = st_up_2;
   // else if (vario_average >= buzz_up_1_thres && flight) flight_mode = st_up_1;
   //else 
-  if (vario_average >= buzz_up_0_thres && flight) flight_mode = st_up_0;
-  else if (vario_average <= buzz_down_0_thres && flight) flight_mode = st_down_0;
+  if (vario_average >= buzz_up_0_thres && flight) {
+    if (flight_mode != st_up_0) freq = buzz_up_start_freq;
+    flight_mode = st_up_0;
+  }
+  // else if (vario_average >= 0 && flight) {
+  //   if (flight_mode != st_buzzzz) freq = buzz_down_start_freq;
+  //   flight_mode = st_buzzzz;
+  // }
+  else if (vario_average <= buzz_down_0_thres && flight) {
+    if (flight_mode != st_down_0) freq = buzz_down_start_freq;
+    flight_mode = st_down_0;    
+  }
   else if (buzz_cnt == 0) flight_mode = st_mute;
 
-  if (flight_mode == st_mute) freq = buzz_up_start_freq;
+  // if (flight_mode == st_mute) freq = buzz_up_start_freq;
 
   }
 
