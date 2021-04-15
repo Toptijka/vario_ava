@@ -631,29 +631,35 @@ void buzz_end_of_flight(int in_dat)
   // freq_shift_on();
 }
 
+void buzz_pwdown(int in_dat)
+{
+buzz_end_of_flight(in_dat);	
+buzz_end_of_flight(in_dat);	
+}
+
 /* ********************************************************************** */
 
 int buzz_size_array;
-int buzz_up_0_thres;
-int buzz_up_1_thres;
-int buzz_up_2_thres;
-int buzz_up_3_thres;
-int buzz_down_0_thres;
-unsigned int pwdown_time;
+int buzz_up_thres;
+int buzz_down_thres;
 int buzz_up_start_freq;
 int buzz_down_start_freq;
-int buzz_up_factor;
-int buzz_down_factor;
+int buzz_volume;
+unsigned int pwdown_time;
+// int ;
+// int ;
+// int ;
+// int ;
 int battery_alarm_level;
 int display_temp;
 int buzz_always;
 int flight_total;
 int flight_last;
-int buzz_volume;
+// int ;
 int flight_time;
 unsigned int total_flight_time;
-unsigned int flight_start_filter;
 unsigned int flight_stop_filter;
+unsigned int flight_start_filter;
 int battery_calibration;
 unsigned int working_time, total_working_time;
 
@@ -666,26 +672,26 @@ void update_int(int addr, int val)
 void update_params()
 {
   update_int(0*2,buzz_size_array);
-  update_int(1*2,buzz_up_0_thres);
-  update_int(2*2,buzz_up_1_thres);
-  update_int(3*2,buzz_up_2_thres);
-  update_int(4*2,buzz_up_3_thres);
-  update_int(5*2,buzz_down_0_thres);
+  update_int(1*2,buzz_up_thres);
+  update_int(2*2,buzz_down_thres);
+  update_int(3*2,buzz_up_start_freq);
+  update_int(4*2,buzz_down_start_freq);
+  update_int(5*2,buzz_volume);
   update_int(6*2,pwdown_time);
-  update_int(7*2,buzz_up_start_freq);
-  update_int(8*2,buzz_down_start_freq);
-  update_int(9*2,buzz_up_factor);
-  update_int(10*2,buzz_down_factor);
+  // update_int(7*2,);
+  // update_int(8*2,);
+  // update_int(9*2,);
+  // update_int(10*2,);
   update_int(11*2,battery_alarm_level);
   update_int(12*2,display_temp);
   update_int(13*2,buzz_always);
-  update_int(14*2,buzz_volume);
+  update_int(14*2,flight_stop_filter);
   update_int(15*2,flight_start_filter);
   update_int(16*2,flight_time);
   update_int(17*2,total_flight_time);
   update_int(18*2,battery_calibration);
   update_int(19*2,total_working_time);
-  update_int(20*2,flight_stop_filter);
+  // update_int(20*2,);
 
 }
 
@@ -697,47 +703,47 @@ return EEPROM.read(addr)*256 + EEPROM.read(addr+1);
 void read_params()
 {
   buzz_size_array = read_int(0*2);
-  buzz_up_0_thres = read_int(1*2);
-  buzz_up_1_thres = read_int(2*2);
-  buzz_up_2_thres = read_int(3*2);
-  buzz_up_3_thres = read_int(4*2);
-  buzz_down_0_thres = read_int(5*2);
+  buzz_up_thres = read_int(1*2);
+  buzz_down_thres = read_int(2*2);
+  buzz_up_start_freq = read_int(3*2);
+  buzz_down_start_freq = read_int(4*2);
+  buzz_volume = read_int(5*2);
   pwdown_time = read_int(6*2);
-  buzz_up_start_freq = read_int(7*2);
-  buzz_down_start_freq = read_int(8*2);
-  buzz_up_factor = read_int(9*2);
-  buzz_down_factor = read_int(10*2);
+   // = read_int(7*2);
+   // = read_int(8*2);
+   // = read_int(9*2);
+   // = read_int(10*2);
   battery_alarm_level = read_int(11*2);
   display_temp = read_int(12*2);
   buzz_always = read_int(13*2);
-  buzz_volume = 0;//read_int(14*2);
+  flight_stop_filter = read_int(14*2);
   flight_start_filter = read_int(15*2);
   flight_time = !flight? (unsigned int) read_int(16*2) : flight_time;
   total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
   battery_calibration = read_int(18*2);
   total_working_time = (unsigned int) read_int(19*2);
-  flight_stop_filter = read_int(20*2);
+   // = read_int(20*2);
 }
 
 void default_params()
 {
 buzz_size_array = 20;
-buzz_up_0_thres = 20;
-buzz_up_1_thres = 50;
-buzz_up_2_thres = 100;
-buzz_up_3_thres = 300;
-buzz_down_0_thres = -150;
-pwdown_time = 60;
+buzz_up_thres = 20;
+buzz_down_thres = -150;
 buzz_up_start_freq = 400;
-buzz_down_start_freq = 300;
-buzz_up_factor = 4;
-buzz_down_factor = 8;
-battery_alarm_level = 40;
+buzz_down_start_freq = 500;
+buzz_volume = 200;
+pwdown_time = 60;
+
+ // = 300;
+ // = 4;
+ // = 8;
+battery_alarm_level = 20;
 display_temp = 0;
 buzz_always = 0;
-buzz_volume = 50;
-flight_start_filter = 4000;
+
 flight_stop_filter = 60;
+flight_start_filter = 4000;
 }
 
 /* ************************************************************ */

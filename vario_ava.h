@@ -200,36 +200,38 @@ void freq_shift_off ();
 void freq_shift ();
 void disable_timer ();
 void buzz_end_of_flight(int in_dat);
+void buzz_pwdown(int in_dat);
 
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
 In this mode you can set parameters.\n\n\
-up_freq = (vario_average - buzz_up_0_thres) * buzz_up_factor + buzz_up_start_freq\n\
-down_freq = buzz_down_start_freq + (vario_average + buzz_down_0_thres) / buzz_down_factor\n\n\
+Version: 1.0\n\
+up_freq = log10(vario)*200.0+buzz_up_start_freq\n\
+down_freq = buzz_down_start_freq - log10(|vario+100|)*150.0\n\n\
 p0 - buzz_size_array (20) [1-100]\n\
-p1 - buzz_up_0_thres, cm/s (20)\n\
-p2 - buzz_up_1_thres, cm/s (50)\n\
-p3 - buzz_up_2_thres, cm/s (100)\n\
-p4 - buzz_up_3_thres, cm/s (300)\n\
-p5 - buzz_down_0_thres, cm/s (-150)\n\
+p1 - buzz_up_thres, cm/s (20)\n\
+p2 - buzz_down_thres, cm/s (-150)\n\
+p3 - buzz_up_start_freq, Hz (400)\n\
+p4 - buzz_down_start_freq, Hz (300)\n\
+p5 - buzz_volume (200) [0-800]\
 p6 - pwdown_time, min (60)\n\
-p7 - buzz_up_start_freq, Hz (400)\n\
-p8 - buzz_down_start_freq, Hz (300)\n\
-p9 - buzz_up_factor (4)\n\
-p10 - buzz_down_factor (8)\n\
-p11 - battery_alarm_level, % (40)\n\
+p7 - \n\
+p8 - \n\
+p9 - \n\
+p10 - \n\
+p11 - battery_alarm_level, % (20)\n\
 p12 - display_temp (0)\n\
 p13 - buzz_always (0)\n\
-p14 - buzz_volume (200) [0-800]\n\
+p14 - flight_stop_filter, s (60)\n\
 p15 - flight_start_filter, ms (4000)\n\
 p16 - flight_time, min\n\
 p17 - total_flight_time, min\n\
 p19 - total_working_time, min\n\
-p20 - flight_stop_filter, s (60)\n\
 Example: \"p0=20\"\n\n\
 \"default\": reset to default values\n\n\
 \"calibrate\": use this command after fully charging the battery\n\n\
 \"report\": report current values\n\n\
+\"sleep\": power down\n\n\
 \"exit\": exit without save\n\n\
 \"save\": save & exit\n"};
 
@@ -244,28 +246,28 @@ extern float batt_average;
 extern int battery_pin;
 
 extern int buzz_size_array;
-extern int buzz_up_0_thres;
-extern int buzz_up_1_thres;
-extern int buzz_up_2_thres;
-extern int buzz_up_3_thres;
-extern int buzz_down_0_thres;
-extern unsigned int pwdown_time;
+extern int buzz_up_thres;
+extern int buzz_down_thres;
 extern int buzz_up_start_freq;
 extern int buzz_down_start_freq;
-extern int buzz_up_factor;
-extern int buzz_down_factor;
+extern int buzz_volume;
+extern unsigned int pwdown_time;
+// extern int ;
+// extern int ;
+// extern int ;
+// extern int ;
 extern int battery_alarm_level;
 extern int display_temp;
 extern int buzz_always;
 extern int flight_total;
 extern int flight_last;
-extern int buzz_volume;
+// extern int ;
 extern int flight_time;
 extern unsigned int total_flight_time;
+extern unsigned int flight_stop_filter;
 extern unsigned int flight_start_filter;
 extern int battery_calibration;
 extern unsigned int working_time, total_working_time;
-extern unsigned int flight_stop_filter;
 extern volatile unsigned int update_freq;
 extern volatile int fshift;
 
