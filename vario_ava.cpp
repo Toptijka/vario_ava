@@ -617,6 +617,20 @@ void disable_timer () {
   TCCR1B = 0;
 }
 
+void buzz_start_of_flight(int in_dat)
+{
+  freq_shift_off();
+  int buzz_vol = constrain(in_dat, MIN_VOLUME, MAX_VOLUME);
+  for (int i = 0; i < 50; i++) {
+    PWM_frequency(9, 400+i*8, CORRECT_PWM);//FAST_PWM);
+    PWM_set(9, buzz_vol);
+    delay(10/DIV_FACTOR);
+  }
+  // PWM_set(9, 0);
+  disable_timer();
+  // freq_shift_on();
+}
+
 void buzz_end_of_flight(int in_dat)
 {
   freq_shift_off();

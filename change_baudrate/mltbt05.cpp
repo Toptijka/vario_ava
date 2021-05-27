@@ -28,7 +28,7 @@ void MLTBT05::configure(const char * bleName)
   Serial.println("GO!");
 	
 	char text[32] = "";
-	sprintf(text, "AT+NAME%s", bleName);
+	// sprintf(text, "AT+NAME%s", bleName);
 	sendCommand(text);
 /*
 AT+BAUD1——-1200
@@ -55,7 +55,8 @@ AT+BAUDC—-1382400
 */
 
   //sendCommand(&bleSerial, "AT+ORGL");
-  sendCommand( "AT+BAUD1");
+    // sendCommand( "AT+NAMEnotime");
+    sendCommand( "AT+BAUD1");
 	sendCommand( "AT+ROLE3");	// slave mode
 	sendCommand( "AT+TYPE0");	// unsecure, no pin required
 	sendCommand( "AT+POWE3");	// max RF power

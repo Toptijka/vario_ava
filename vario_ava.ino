@@ -45,10 +45,9 @@ Credits:
 #include "vario_ava.h"
 
 /////////////////////////////////////////
-byte Temperature = 0;
+float Temperature = 0;
 float Pressure = 101325.0;
 long Altitude;
-long average_pressure;
 int vario;
 long vario_average;
 float vario_filtered;
@@ -188,7 +187,7 @@ void press_button() {
 
 void bme_init() {
   bme.setFilter(FILTER_COEF_16);
-  bme.setTempOversampling(OVERSAMPLING_8);
+  bme.setTempOversampling(OVERSAMPLING_2);
   bme.setPressOversampling(OVERSAMPLING_16);
   bme.setStandbyTime(STANDBY_500US);
   if(!bme.begin()) while (1) {
@@ -197,6 +196,10 @@ void bme_init() {
     };
 }
 
+void bme_read() {
+  Pressure = bme.readPressure();
+  Altitude = (44330.0 * (1.0 - pow(((float)Pressure / p0), 0.190295)) * 100.0);
+}
 
 void pwr_down() {
   power.setSleepMode(POWERDOWN_SLEEP);
@@ -232,7 +235,9 @@ uart.println(F("bmp280!!!"));
 power.setSleepMode(IDLE_SLEEP);
 time_end_of_flight = millis();
 vario_filtered = 0;
-
+buzz_hello();
+delay(500/DIV_FACTOR);
+bme_read();
 }
 
 void buzz_hello()
@@ -276,7 +281,7 @@ pinMode(SCL, INPUT);
   read_params();
 #endif
 
-  buzz_hello();
+  // buzz_hello();
 
 for (int i = 0; i < buzz_max_array; i++)
   buzz_array[i] = 0;
@@ -324,9 +329,7 @@ if(!programming_mode) {
   if (!sleep) {
 
   if (cnt_loop % (LOOPS/10) == 1) { // calculating time
-  Pressure = bme.readPressure();
-  average_pressure = Pressure;//Averaging_Filter(Pressure);
-  Altitude = (44330.0 * (1.0 - pow(((float)Pressure / p0), 0.190295)) * 100.0);
+  bme_read();
 
 /* ************************ VARIO ****************************************** */
 
@@ -354,8 +357,8 @@ else if (cnt_loop % (LOOPS/10) == 2) { // sending data time
     //pwmWrite(9, 0);
     // PWM_set(9, 0);
     String str_out =                                                                 //combine all values and create part of NMEA data string output
-        String("LK8EX1" + String(",") + String(average_pressure, DEC) + String(",") + String(Altitude / 100, DEC) + String(",") +
-               String(vario, DEC) + String(",") + String(Temperature, DEC) + String(",") + String(fake_battery/*battery_level*/, DEC) + String(","));
+        String("LK8EX1" + String(",") + String((long)Pressure, DEC) + String(",") + String(Altitude / 100, DEC) + String(",") +
+               String(vario, DEC) + String(",") + String((int)Temperature, DEC) + String(",") + String(fake_battery/*battery_level*/, DEC) + String(","));
     unsigned int checksum_end, ai, bi;                                               // Calculating checksum for data string
     for (checksum_end = 0, ai = 0; ai < str_out.length(); ai++)
     {
@@ -397,7 +400,7 @@ else disable_timer();
 
 if (cnt_loop % (LOOPS/10) == 1) {
 
-  vario_filtered = vario_filtered * 15 / 16 + (float)vario / 16;
+  vario_filtered = vario_filtered * 15.0 / 16.0 + (float)vario / 16.0;
   // uart.println(vario_filtered);
 
   if ((vario_filtered < 20 && vario_filtered > -20) && !flight) time_flight_start = millis();
@@ -406,6 +409,7 @@ if (cnt_loop % (LOOPS/10) == 1) {
     if (millis() > time_flight_start + flight_start_filter/DIV_FACTOR) {
       flight = 1;
       flight_time = 0;
+      // buzz_start_of_flight(buzz_volume);
     }
 
   
@@ -579,7 +583,6 @@ if(uart.available())
     // uart.println("p20=" + String(flight_stop_filter,DEC));
     }
 
-  
   if (rx_dat.startsWith("help")) print_message(help_message, strlen_P(help_message));
 
   if (rx_dat.startsWith("exit") || !bt_connect) {
@@ -593,6 +596,7 @@ if(uart.available())
 
   if (rx_dat.startsWith("sleep")) {
     uart.println("want sleep");
+    flight = 0;
     read_params();
     programming_mode = 0;
     buzz_pwdown(buzz_volume);
@@ -626,9 +630,9 @@ if (button) {
   if (digitalRead(button_pin)) {
     if (sleep) {
       if (button_cnt == 2) {
+        // buzz_hello();
         sensor_pwr_on();
         sleep = 0;
-        buzz_hello();
       }
       button_cnt++ ;
       button = 0;

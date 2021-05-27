@@ -200,12 +200,13 @@ void freq_shift_off ();
 void freq_shift ();
 void disable_timer ();
 void buzz_end_of_flight(int in_dat);
+// void buzz_start_of_flight(int in_dat);
 void buzz_pwdown(int in_dat);
 
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
 In this mode you can set parameters.\n\n\
-Version: 1.0\n\
+Version: 1.3\n\
 up_freq = log10(vario)*200.0+buzz_up_start_freq\n\
 down_freq = buzz_down_start_freq - log10(|vario+100|)*150.0\n\n\
 p0 - buzz_size_array (20) [1-100]\n\
@@ -213,12 +214,8 @@ p1 - buzz_up_thres, cm/s (20)\n\
 p2 - buzz_down_thres, cm/s (-150)\n\
 p3 - buzz_up_start_freq, Hz (400)\n\
 p4 - buzz_down_start_freq, Hz (300)\n\
-p5 - buzz_volume (200) [0-800]\
+p5 - buzz_volume (200) [0-800]\n\
 p6 - pwdown_time, min (60)\n\
-p7 - \n\
-p8 - \n\
-p9 - \n\
-p10 - \n\
 p11 - battery_alarm_level, % (20)\n\
 p12 - display_temp (0)\n\
 p13 - buzz_always (0)\n\
