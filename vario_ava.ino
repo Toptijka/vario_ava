@@ -6,7 +6,7 @@
 //BMP280_SDA <----> Pin_A4
 //Battery_level <-> Pin_A6
 
-// to Vasily V.: странно делать датчик весом 10 грамм с питанием от внешнего аккумулятора весом 200 грамм.
+// to V.V.: странно делать датчик весом 10 грамм с питанием от внешнего аккумулятора весом 200 грамм.
 
 //Source: http://www.parapentiste.info/forum/bons-plans/vario-bluetooth-pour-xctrack-lk8000-sur-vos-tablettes-ou-smartphones-t48268.0.html
 
