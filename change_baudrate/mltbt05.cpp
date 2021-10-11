@@ -56,6 +56,8 @@ AT+BAUDC—-1382400
 
   //sendCommand(&bleSerial, "AT+ORGL");
     // sendCommand( "AT+NAMEnotime");
+    sendCommand( "AT+NAMEthe_best_of_vario");
+    // sendCommand( "AT+NAMEthe_best_of_the_best");
     sendCommand( "AT+BAUD1");
 	sendCommand( "AT+ROLE3");	// slave mode
 	sendCommand( "AT+TYPE0");	// unsecure, no pin required

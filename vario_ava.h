@@ -17,7 +17,7 @@
 #endif
 
 #define MAX_VOLUME 800
-#define MED_VOLUME 300
+#define MED_VOLUME 400
 #define MIN_VOLUME 150
 
 
@@ -206,7 +206,7 @@ void buzz_pwdown(int in_dat);
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
 In this mode you can set parameters.\n\n\
-Version: 1.3\n\
+Version: 1.4\n\
 up_freq = log10(vario)*200.0+buzz_up_start_freq\n\
 down_freq = buzz_down_start_freq - log10(|vario+100|)*150.0\n\n\
 p0 - buzz_size_array (20) [1-100]\n\
@@ -216,6 +216,7 @@ p3 - buzz_up_start_freq, Hz (400)\n\
 p4 - buzz_down_start_freq, Hz (300)\n\
 p5 - buzz_volume (200) [0-800]\n\
 p6 - pwdown_time, min (60)\n\
+p7 - freq_increment, (2)\n\
 p11 - battery_alarm_level, % (20)\n\
 p12 - display_temp (0)\n\
 p13 - buzz_always (0)\n\
@@ -249,6 +250,7 @@ extern int buzz_up_start_freq;
 extern int buzz_down_start_freq;
 extern int buzz_volume;
 extern unsigned int pwdown_time;
+extern int freq_increment;
 // extern int ;
 // extern int ;
 // extern int ;
@@ -282,3 +284,5 @@ float read_voltage();
 // void wait(int del);
 
 #endif
+
+

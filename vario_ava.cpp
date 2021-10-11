@@ -660,6 +660,7 @@ int buzz_up_start_freq;
 int buzz_down_start_freq;
 int buzz_volume;
 unsigned int pwdown_time;
+int freq_increment;
 // int ;
 // int ;
 // int ;
@@ -692,6 +693,7 @@ void update_params()
   update_int(4*2,buzz_down_start_freq);
   update_int(5*2,buzz_volume);
   update_int(6*2,pwdown_time);
+  update_int(7*2,freq_increment);
   // update_int(7*2,);
   // update_int(8*2,);
   // update_int(9*2,);
@@ -723,6 +725,7 @@ void read_params()
   buzz_down_start_freq = read_int(4*2);
   buzz_volume = read_int(5*2);
   pwdown_time = read_int(6*2);
+  freq_increment = read_int(7*2);
    // = read_int(7*2);
    // = read_int(8*2);
    // = read_int(9*2);
@@ -748,7 +751,7 @@ buzz_up_start_freq = 400;
 buzz_down_start_freq = 500;
 buzz_volume = 200;
 pwdown_time = 60;
-
+freq_increment = 2;
  // = 300;
  // = 4;
  // = 8;

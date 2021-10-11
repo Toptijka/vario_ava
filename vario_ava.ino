@@ -264,8 +264,6 @@ pinMode(vcc_out_pin, OUTPUT);
 pinMode(bt_pwrc_pin, OUTPUT);
 pinMode(bt_rst_pin, OUTPUT);
 
-sensor_pwr_on();
-
 // uart.begin(BT_SPEED);     // start communication with the bt-module
   
 // uart.println(F("Try to connect bmp280..."));
@@ -282,6 +280,8 @@ pinMode(SCL, INPUT);
 #else
   read_params();
 #endif
+
+sensor_pwr_on();
 
   // buzz_hello();
 
@@ -533,7 +533,7 @@ if(uart.available())
   if (rx_dat.startsWith("p4=")) buzz_down_start_freq = rx_dat.substring(3,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p5=")) buzz_set_volume(constrain(rx_dat.substring(3,rx_dat.length()-2).toInt(), 0, MAX_VOLUME));
   if (rx_dat.startsWith("p6=")) pwdown_time = rx_dat.substring(3,rx_dat.length()-2).toInt();
-  // if (rx_dat.startsWith("p7="))  = rx_dat.substring(3,rx_dat.length()-2).toInt();
+  if (rx_dat.startsWith("p7=")) freq_increment = constrain(rx_dat.substring(3,rx_dat.length()-2).toInt(),1,10);
   // if (rx_dat.startsWith("p8="))  = rx_dat.substring(3,rx_dat.length()-2).toInt();
   // if (rx_dat.startsWith("p9="))  = rx_dat.substring(3,rx_dat.length()-2).toInt();
   // if (rx_dat.startsWith("p10="))  = rx_dat.substring(4,rx_dat.length()-2).toInt();
@@ -569,7 +569,7 @@ if(uart.available())
     uart.println("p4=" + String(buzz_down_start_freq,DEC));
     uart.println("p5=" + String(buzz_volume,DEC));
     uart.println("p6=" + String(pwdown_time,DEC));
-    // uart.println("p7=" + String(,DEC));
+    uart.println("p7=" + String(freq_increment,DEC));
     // uart.println("p8=" + String(,DEC));
     // uart.println("p9=" + String(,DEC));
     delay(100);
@@ -701,7 +701,7 @@ vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
   // unsigned int wanted_freq = (flight_mode == st_up_0)? (unsigned int) (log10_vario*200.0)+buzz_up_start_freq :
   //                                          constrain((buzz_down_start_freq + (vario_average+buzz_down_thres)/buzz_down_factor),1,buzz_down_start_freq);
 
-  freq = constrain(wanted_freq, freq-1, freq+1);
+  freq = constrain(wanted_freq, freq-freq_increment, freq+freq_increment);
 
   buzz_period = (byte)(0.4*LOOPS) - (byte) (log10_vario * LOOPS/10) ;
 
