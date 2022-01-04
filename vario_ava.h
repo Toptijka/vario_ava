@@ -20,7 +20,24 @@
 #define MED_VOLUME 400
 #define MIN_VOLUME 150
 
-
+#define adr_buzz_size_array       0*2
+#define adr_buzz_up_thres         1*2
+#define adr_buzz_down_thres       2*2
+#define adr_buzz_up_start_freq    3*2
+#define adr_buzz_down_start_freq  4*2
+#define adr_buzz_volume           5*2
+#define adr_pwdown_time           6*2
+#define adr_freq_increment        7*2
+#define adr_number_of_flights     8*2
+#define adr_battery_alarm_level  11*2
+#define adr_display_temp         12*2
+#define adr_buzz_always          13*2
+#define adr_flight_stop_filter   14*2
+#define adr_flight_start_filter  15*2
+#define adr_flight_time          16*2
+#define adr_total_flight_time    17*2
+#define adr_battery_calibration  18*2
+#define adr_total_working_time   19*2
 
 
 #define CORRECT_PWM 1
@@ -263,6 +280,7 @@ extern int flight_last;
 // extern int ;
 extern int flight_time;
 extern unsigned int total_flight_time;
+extern unsigned int number_of_flights;
 extern unsigned int flight_stop_filter;
 extern unsigned int flight_start_filter;
 extern int battery_calibration;

@@ -424,14 +424,16 @@ if (cnt_loop % (LOOPS/10) == 1) {
       // uart.println(flight);
       flight = 0;
       buzz_end_of_flight(buzz_volume);
+      number_of_flights++;
+      update_int(adr_number_of_flights,number_of_flights);
       // uart.println(flight);
     }
 
     if (millis() > time_flight_start + (flight_time+1)*60000/DIV_FACTOR) {
       flight_time++;
-      update_int(16*2,flight_time);
+      update_int(adr_flight_time,flight_time);
       total_flight_time++;
-      update_int(17*2,total_flight_time);
+      update_int(adr_total_flight_time,total_flight_time);
     }
 
   }
@@ -447,7 +449,7 @@ else if(millis() > time_end_of_flight + pwdown_time*60000/DIV_FACTOR) {
 if (millis() > time_start_working + (working_time+1)*60000/DIV_FACTOR) {
       working_time++;
       total_working_time++;
-      update_int(19*2,total_working_time);
+      update_int(adr_total_working_time,total_working_time);
     }
 
 /* ********************** Battery <-> Temperature ******************************** */
@@ -544,6 +546,7 @@ if(uart.available())
   if (rx_dat.startsWith("p15=")) flight_start_filter = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p16=")) flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p17=")) total_flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
+  if (rx_dat.startsWith("p18=")) number_of_flights = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p19=")) total_working_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
   // if (rx_dat.startsWith("p20=")) 
 
@@ -581,6 +584,7 @@ if(uart.available())
     uart.println("p15=" + String(flight_start_filter,DEC));
     uart.println("p16=" + String(flight_time,DEC));
     uart.println("p17=" + String(total_flight_time,DEC));
+    uart.println("p18=" + String(number_of_flights,DEC));
     uart.println("p19=" + String(total_working_time,DEC));
     // uart.println("p20=" + String(flight_stop_filter,DEC));
     }

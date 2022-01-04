@@ -673,6 +673,7 @@ int flight_last;
 // int ;
 int flight_time;
 unsigned int total_flight_time;
+unsigned int number_of_flights;
 unsigned int flight_stop_filter;
 unsigned int flight_start_filter;
 int battery_calibration;
@@ -686,27 +687,28 @@ void update_int(int addr, int val)
 
 void update_params()
 {
-  update_int(0*2,buzz_size_array);
-  update_int(1*2,buzz_up_thres);
-  update_int(2*2,buzz_down_thres);
-  update_int(3*2,buzz_up_start_freq);
-  update_int(4*2,buzz_down_start_freq);
-  update_int(5*2,buzz_volume);
-  update_int(6*2,pwdown_time);
-  update_int(7*2,freq_increment);
+  update_int(adr_buzz_size_array     ,buzz_size_array);
+  update_int(adr_buzz_up_thres       ,buzz_up_thres);
+  update_int(adr_buzz_down_thres     ,buzz_down_thres);
+  update_int(adr_buzz_up_start_freq  ,buzz_up_start_freq);
+  update_int(adr_buzz_down_start_freq,buzz_down_start_freq);
+  update_int(adr_buzz_volume         ,buzz_volume);
+  update_int(adr_pwdown_time         ,pwdown_time);
+  update_int(adr_freq_increment      ,freq_increment);
   // update_int(7*2,);
   // update_int(8*2,);
   // update_int(9*2,);
   // update_int(10*2,);
-  update_int(11*2,battery_alarm_level);
-  update_int(12*2,display_temp);
-  update_int(13*2,buzz_always);
-  update_int(14*2,flight_stop_filter);
-  update_int(15*2,flight_start_filter);
-  update_int(16*2,flight_time);
-  update_int(17*2,total_flight_time);
-  update_int(18*2,battery_calibration);
-  update_int(19*2,total_working_time);
+  update_int(adr_battery_alarm_level,battery_alarm_level);
+  update_int(adr_display_temp       ,display_temp);
+  update_int(adr_buzz_always        ,buzz_always);
+  update_int(adr_flight_stop_filter ,flight_stop_filter);
+  update_int(adr_flight_start_filter,flight_start_filter);
+  update_int(adr_flight_time        ,flight_time);
+  update_int(adr_total_flight_time  ,total_flight_time);
+  update_int(adr_number_of_flights  ,number_of_flights);
+  update_int(adr_battery_calibration,battery_calibration);
+  update_int(adr_total_working_time ,total_working_time);
   // update_int(20*2,);
 
 }
@@ -718,27 +720,29 @@ return EEPROM.read(addr)*256 + EEPROM.read(addr+1);
 
 void read_params()
 {
-  buzz_size_array = read_int(0*2);
-  buzz_up_thres = read_int(1*2);
-  buzz_down_thres = read_int(2*2);
-  buzz_up_start_freq = read_int(3*2);
-  buzz_down_start_freq = read_int(4*2);
-  buzz_volume = read_int(5*2);
-  pwdown_time = read_int(6*2);
-  freq_increment = read_int(7*2);
+  buzz_size_array      = read_int(adr_buzz_size_array     );
+  buzz_up_thres        = read_int(adr_buzz_up_thres       );
+  buzz_down_thres      = read_int(adr_buzz_down_thres     );
+  buzz_up_start_freq   = read_int(adr_buzz_up_start_freq  );
+  buzz_down_start_freq = read_int(adr_buzz_down_start_freq);
+  buzz_volume          = read_int(adr_buzz_volume         );
+  pwdown_time          = read_int(adr_pwdown_time         );
+  freq_increment       = read_int(adr_freq_increment      );
    // = read_int(7*2);
    // = read_int(8*2);
    // = read_int(9*2);
    // = read_int(10*2);
-  battery_alarm_level = read_int(11*2);
-  display_temp = read_int(12*2);
-  buzz_always = read_int(13*2);
-  flight_stop_filter = read_int(14*2);
-  flight_start_filter = read_int(15*2);
-  flight_time = !flight? (unsigned int) read_int(16*2) : flight_time;
-  total_flight_time = !flight? (unsigned int) read_int(17*2) : total_flight_time;
-  battery_calibration = read_int(18*2);
-  total_working_time = (unsigned int) read_int(19*2);
+  battery_alarm_level = read_int(adr_battery_alarm_level);
+  display_temp        = read_int(adr_display_temp       );
+  buzz_always         = read_int(adr_buzz_always        );
+  flight_stop_filter  = read_int(adr_flight_stop_filter );
+  flight_start_filter = read_int(adr_flight_start_filter);
+  flight_time         = !flight? (unsigned int) read_int(adr_flight_time      ) : flight_time;
+  total_flight_time   = !flight? (unsigned int) read_int(adr_total_flight_time) : total_flight_time;
+  number_of_flights   = number_of_flights;
+  
+  battery_calibration = read_int(adr_battery_calibration);
+  total_working_time  = (unsigned int) read_int(adr_total_working_time);
    // = read_int(20*2);
 }
 
