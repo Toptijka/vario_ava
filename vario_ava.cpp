@@ -725,7 +725,7 @@ void read_params()
   buzz_down_thres      = read_int(adr_buzz_down_thres     );
   buzz_up_start_freq   = read_int(adr_buzz_up_start_freq  );
   buzz_down_start_freq = read_int(adr_buzz_down_start_freq);
-  buzz_volume          = read_int(adr_buzz_volume         );
+  buzz_volume          = 20;//read_int(adr_buzz_volume         );
   pwdown_time          = read_int(adr_pwdown_time         );
   freq_increment       = read_int(adr_freq_increment      );
    // = read_int(7*2);
