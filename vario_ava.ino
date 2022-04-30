@@ -246,15 +246,12 @@ void buzz_hello()
 {
 freq_shift_off();
 PWM_frequency(9, 3000/**DIV_FACTOR*/, CORRECT_PWM);
-PWM_set(9, 10);//300);//buzz_volume);
+PWM_set(9, 300);//buzz_volume);
 delay(500/DIV_FACTOR);
 // PWM_set(9, 0);
 disable_timer();
 // freq_shift_on();
 }
-
-volatile int fm_pointer = 0;
-volatile int pause = 0;
 
 void setup()
 {
@@ -312,70 +309,19 @@ working_time = 0;
 
 // freq_shift_on();
 
-  freq_shift_on();
-  buzz_flight(flmstr()/**DIV_FACTOR*/,0);
-  fm_pointer+=2;
-}
-
-
-
-int flmstr () {
-  return pgm_read_byte(&flymaster[fm_pointer])*256 + pgm_read_byte(&flymaster[fm_pointer+1]);
 }
 
 ISR(TIMER1_OVF_vect) {
   // OCR1A = OCR1A + 1;//update_duty;
       //   OCR1AH = highByte(duty);
       // OCR1AL = lowByte(duty);
-  /////ICR1 = update_freq;
+  ICR1 = update_freq;
   // ICR1 += fshift;
   // freq_shift();
-
-  // if(fm_pointer < sizeof(flymaster)/2) {
-  int f = flmstr();
-  if (f == 0 ) {
-    fm_pointer+=2;
-    disable_timer();
-    pause = flmstr();
-    fm_pointer+=2;
-  } else {
-  ICR1 = 8000000 / (f * DIV_FACTOR);
-  fm_pointer+=2;
-  }
-  // ICR1 = (freq > 256)? 8000000 / (freq * DIV_FACTOR) : 1000000 / (freq * DIV_FACTOR);
-
-  
-  // }
-  // else disable_timer();
-
 }
 
 void loop(void)
 {
-if (pause != 0 && fm_pointer < sizeof(flymaster)) {
-  wait(pause);// * DIV_FACTOR);
-  pause = 0;
-  freq_shift_on();
-  buzz_flight(flmstr()/**DIV_FACTOR*/,0);
-  fm_pointer+=2;
-  }
-}
-
-
-void loop_(void)
-{
-  // uart.print("flymaster:\n");
-  // uart.print(flmstr());
-  // fm_pointer+=2;
-  // uart.print(pgm_read_byte(&flymaster[fm_pointer]));
-  // uart.print(" ");
-  // uart.print(pgm_read_byte(&flymaster[fm_pointer+1]));
-  // uart.print(" ");
-  // uart.print(fm_pointer);
-  // // uart.print(pgm_read_byte(&flymaster[fm_pointer])*256+pgm_read_byte(&flymaster[fm_pointer+1]));
-  // uart.print("\n\n");
-  // fm_pointer+=2;
-  // wait(300);
 
 bt_connect = digitalRead(bt_stat_pin);
 
@@ -783,7 +729,7 @@ vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
     freq_shift_on();
     // freq_shift_off();
     buzz_flight(freq/**DIV_FACTOR*/,0);
-  } //else if (flight_mode == st_mute) disable_timer();
+  } else if (flight_mode == st_mute) disable_timer();
 
   buzz_cnt = (buzz_cnt >= buzz_period)? 0 : buzz_cnt + 1;
 
