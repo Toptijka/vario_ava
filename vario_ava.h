@@ -28,7 +28,9 @@
 #define adr_buzz_volume           5*2
 #define adr_pwdown_time           6*2
 #define adr_freq_increment        7*2
-#define adr_number_of_flights     8*2
+#define adr_count_flights         8*2
+#define adr_send_average          9*2
+#define adr_hold_button          10*2
 #define adr_battery_alarm_level  11*2
 #define adr_display_temp         12*2
 #define adr_buzz_always          13*2
@@ -223,7 +225,7 @@ void buzz_pwdown(int in_dat);
 const char welcome_message[] PROGMEM = {"\nWelcome to programming mode!\nYou can send the command \"help\"\n"};
 const char help_message[] PROGMEM = {"\
 In this mode you can set parameters.\n\n\
-Version: 1.4\n\
+Version: 1.5\n\
 up_freq = log10(vario)*200.0+buzz_up_start_freq\n\
 down_freq = buzz_down_start_freq - log10(|vario+100|)*150.0\n\n\
 p0 - buzz_size_array (20) [1-100]\n\
@@ -234,6 +236,8 @@ p4 - buzz_down_start_freq, Hz (300)\n\
 p5 - buzz_volume (200) [0-800]\n\
 p6 - pwdown_time, min (60)\n\
 p7 - freq_increment, (2)\n\
+p9 - send_average, (1)\n\
+p10 - hold_button, ms (0) [0-10000]\n\
 p11 - battery_alarm_level, % (20)\n\
 p12 - display_temp (0)\n\
 p13 - buzz_always (0)\n\
@@ -269,9 +273,8 @@ extern int buzz_volume;
 extern unsigned int pwdown_time;
 extern int freq_increment;
 // extern int ;
-// extern int ;
-// extern int ;
-// extern int ;
+extern int send_average;
+extern unsigned int hold_button;
 extern int battery_alarm_level;
 extern int display_temp;
 extern int buzz_always;
@@ -280,7 +283,7 @@ extern int flight_last;
 // extern int ;
 extern int flight_time;
 extern unsigned int total_flight_time;
-extern unsigned int number_of_flights;
+extern unsigned int count_flights;
 extern unsigned int flight_stop_filter;
 extern unsigned int flight_start_filter;
 extern int battery_calibration;

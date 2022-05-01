@@ -53,7 +53,6 @@ long Altitude;
 int vario;
 long vario_average;
 float vario_filtered;
-long vario_average_old;
 const float p0 = 101325.0;              //Pressure at sea level (Pa)
 unsigned long get_time1 = 0;
 // unsigned long get_time2 = 0;
@@ -95,6 +94,7 @@ bool paramoo = 0;
 // unsigned long time_array[alt_max_array];
 // int alt_array_pointer = 0;
 
+bool first_time = 1;
 int buzz_array[buzz_max_array];
 int buzz_array_pointer = 0;
 // int buzz_volume_up;
@@ -212,8 +212,7 @@ void pwr_down() {
   power.sleep(SLEEP_FOREVER);
 }
 
-void sensor_pwr_off()
-{
+void sensor_pwr_off() {
 uart.end(); 
 digitalWrite(0, 0);
 digitalWrite(1, 0);
@@ -221,6 +220,8 @@ digitalWrite(bt_pwrc_pin, 0);
 digitalWrite(bt_rst_pin, 0);
 digitalWrite(vcc_out_pin, 0);
 }
+int varray [20];
+int varray_pointer = 0;
 
 void sensor_pwr_on()
 {
@@ -237,6 +238,8 @@ uart.println(F("bmp280!!!"));
 power.setSleepMode(IDLE_SLEEP);
 time_end_of_flight = millis();
 vario_filtered = 0;
+first_time = 1;
+varray_pointer  = 0;
 buzz_hello();
 delay(500/DIV_FACTOR);
 bme_read();
@@ -320,6 +323,8 @@ ISR(TIMER1_OVF_vect) {
   // freq_shift();
 }
 
+/* ************************* LOOP ****************************************** */
+
 void loop(void)
 {
 
@@ -330,20 +335,30 @@ String rx_dat="";
 if(!programming_mode) {
   if (!sleep) {
 
-  if (cnt_loop % (LOOPS/10) == 1) { // calculating time
-  bme_read();
 
 /* ************************ VARIO ****************************************** */
+  if (cnt_loop % (LOOPS/10) == 1) { // calculating time
+  bme_read();
 
 time_new = millis() * DIV_FACTOR;
 
 // vario = -(analogRead(A2) - 100);
-vario = 1000 * ((float)(Altitude - alt_old) / (float)(time_new - time_old));
+vario = first_time? 0 : 1000 * ((float)(Altitude - alt_old) / (float)(time_new - time_old));
+
+first_time = 0;
+
+// if (varray_pointer < 20){
+//   varray[varray_pointer] = vario;
+//   varray[varray_pointer+1] = first_time;
+//   varray_pointer+=2;
+//   }
+
+// first_time = 0;
 
 time_old = time_new;
 alt_old = Altitude;
 
-if (!bt_connect || buzz_always != 0) {
+if (!bt_connect || buzz_always != 0 || send_average) {
   buzz_array[buzz_array_pointer] = vario;
   if (buzz_array_pointer != buzz_size_array - 1) buzz_array_pointer++;
   else buzz_array_pointer = 0;
@@ -358,11 +373,14 @@ else if (cnt_loop % (LOOPS/10) == 2) { // sending data time
     //PWM_default(9);
     //pwmWrite(9, 0);
     // PWM_set(9, 0);
-    String str_out =                                                                 //combine all values and create part of NMEA data string output
-        String("LK8EX1" + String(",") + String((long)Pressure, DEC) + String(",") + String(Altitude / 100, DEC) + String(",") +
-               String(vario, DEC) + String(",") + String((int)Temperature, DEC) + String(",") + String(fake_battery/*battery_level*/, DEC) + String(","));
+    String str_out = String("$LK8EX1," + String((long)Pressure, DEC) + String(",") + String(Altitude / 100, DEC) + String(","));
+    
+    if (send_average==1) str_out = String(str_out + String(vario_average, DEC));
+    else str_out = String(str_out + String(vario, DEC));
+
+    str_out = String(str_out + String(",") + String((int)Temperature, DEC) + String(",") + String(fake_battery/*battery_level*/, DEC) + String(","));
     unsigned int checksum_end, ai, bi;                                               // Calculating checksum for data string
-    for (checksum_end = 0, ai = 0; ai < str_out.length(); ai++)
+    for (checksum_end = 0, ai = 1; ai < str_out.length(); ai++)
     {
       bi = (unsigned char)str_out[ai];
       checksum_end ^= bi;
@@ -370,7 +388,6 @@ else if (cnt_loop % (LOOPS/10) == 2) { // sending data time
     //creating now NMEA uart output LK8EX1 protocol format:
     //$LK8EX1,pressure,altitude,vario,temperature,battery,*checksum
     //uart.println(millis());
-    uart.print("$");                     //print first sign of NMEA protocol
     uart.print(str_out);                 //print data string
     uart.print("*");                     //end of protocol string
     uart.println(checksum_end, HEX);     //print calculated checksum on the end of the string in HEX
@@ -393,9 +410,11 @@ if (cnt_loop >= LOOPS) cnt_loop = 1;
 else cnt_loop ++;
 /* ************************** Buzzer ********************************************* */
 
-vario_average = 0;
+bool buzzer_en = (!bt_connect || buzz_always != 0) && buzz_volume != 0;
 
-if ((!bt_connect || buzz_always != 0) && buzz_volume != 0) buzzer();
+if (buzzer_en || send_average) average();
+
+if (buzzer_en) buzzer();
 else disable_timer();
 
 /* ********************** Flight filter and count ******************************** */
@@ -424,8 +443,8 @@ if (cnt_loop % (LOOPS/10) == 1) {
       // uart.println(flight);
       flight = 0;
       buzz_end_of_flight(buzz_volume);
-      number_of_flights++;
-      update_int(adr_number_of_flights,number_of_flights);
+      count_flights++;
+      update_int(adr_count_flights,count_flights);
       // uart.println(flight);
     }
 
@@ -537,8 +556,8 @@ if(uart.available())
   if (rx_dat.startsWith("p6=")) pwdown_time = rx_dat.substring(3,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p7=")) freq_increment = constrain(rx_dat.substring(3,rx_dat.length()-2).toInt(),1,10);
   // if (rx_dat.startsWith("p8="))  = rx_dat.substring(3,rx_dat.length()-2).toInt();
-  // if (rx_dat.startsWith("p9="))  = rx_dat.substring(3,rx_dat.length()-2).toInt();
-  // if (rx_dat.startsWith("p10="))  = rx_dat.substring(4,rx_dat.length()-2).toInt();
+  if (rx_dat.startsWith("p9=")) send_average = constrain(rx_dat.substring(3,rx_dat.length()-2).toInt(),0,1);
+  if (rx_dat.startsWith("p10=")) hold_button = constrain(rx_dat.substring(4,rx_dat.length()-2).toInt(),0,10000);
   if (rx_dat.startsWith("p11=")) battery_alarm_level = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p12=")) display_temp = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p13=")) buzz_always = rx_dat.substring(4,rx_dat.length()-2).toInt();
@@ -546,7 +565,7 @@ if(uart.available())
   if (rx_dat.startsWith("p15=")) flight_start_filter = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p16=")) flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p17=")) total_flight_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
-  if (rx_dat.startsWith("p18=")) number_of_flights = rx_dat.substring(4,rx_dat.length()-2).toInt();
+  if (rx_dat.startsWith("p18=")) count_flights = rx_dat.substring(4,rx_dat.length()-2).toInt();
   if (rx_dat.startsWith("p19=")) total_working_time = rx_dat.substring(4,rx_dat.length()-2).toInt();
   // if (rx_dat.startsWith("p20=")) 
 
@@ -574,9 +593,9 @@ if(uart.available())
     uart.println("p6=" + String(pwdown_time,DEC));
     uart.println("p7=" + String(freq_increment,DEC));
     // uart.println("p8=" + String(,DEC));
-    // uart.println("p9=" + String(,DEC));
+    uart.println("p9=" + String(send_average,DEC));
     delay(100);
-    // uart.println("p10=" + String(,DEC));
+    uart.println("p10=" + String(hold_button,DEC));
     uart.println("p11=" + String(battery_alarm_level,DEC));
     uart.println("p12=" + String(display_temp,DEC));
     uart.println("p13=" + String(buzz_always!=0,DEC));
@@ -584,7 +603,7 @@ if(uart.available())
     uart.println("p15=" + String(flight_start_filter,DEC));
     uart.println("p16=" + String(flight_time,DEC));
     uart.println("p17=" + String(total_flight_time,DEC));
-    uart.println("p18=" + String(number_of_flights,DEC));
+    uart.println("p18=" + String(count_flights,DEC));
     uart.println("p19=" + String(total_working_time,DEC));
     // uart.println("p20=" + String(flight_stop_filter,DEC));
     }
@@ -597,6 +616,10 @@ if(uart.available())
   }
 
   if (rx_dat.startsWith("default")) default_params();
+
+  // if (rx_dat.startsWith("var"))
+  //   for(int i=0;i<20;i++)
+  //     uart.println(varray[i]);
 
   if (rx_dat.startsWith("calibrate")) battery_calibration = (int)(4.2 * 100/read_voltage());
 
@@ -630,16 +653,19 @@ if (want_sleep) {
   pwr_down();
   }
 
-if (sleep && (millis() - button_time) > 1000/DIV_FACTOR) pwr_down();
+if (sleep && (millis() - button_time) > 1000/DIV_FACTOR && (hold_button == 0)) pwr_down();
 
 if (button) {
   if (digitalRead(button_pin)) {
     if (sleep) {
-      if (button_cnt == 2) {
-        // buzz_hello();
-        sensor_pwr_on();
-        sleep = 0;
+      if (hold_button == 0) {
+        if (button_cnt == 2) {
+          // buzz_hello();
+          sensor_pwr_on();
+          sleep = 0;
+        }
       }
+      else pwr_down();
       button_cnt++ ;
       button = 0;
     }
@@ -649,13 +675,23 @@ if (button) {
     else buzz_set_volume(0);
     button = 0;
   }
-  else if (millis() > button_time + 3000 / DIV_FACTOR) {
-    flight = 0;
-    buzz_end_of_flight(buzz_volume);
-    time_flight_start = millis();
-    button = 0;
-    maybe_pwdown = 1;
-  }
+  else
+    if (sleep) {
+      if (hold_button != 0) {
+        if (millis() > button_time + hold_button / DIV_FACTOR) {
+          sensor_pwr_on();
+          sleep = 0;
+        }
+      }
+    }
+    else if (millis() > button_time + 3000 / DIV_FACTOR) {
+      flight = 0;
+      buzz_end_of_flight(buzz_volume);
+      time_flight_start = millis();
+      button = 0;
+      maybe_pwdown = 1;
+    }
+
 }
 
 if (maybe_pwdown) {
@@ -671,11 +707,7 @@ if (digitalRead(button_pin)) maybe_pwdown = 0;
   
 } // loop
 
-void buzzer() {
-// if (buzz_volume == 0) disable_timer();
-// else if (/*bt_connect || */buzz_always != 0) {
-  // freq_shift_on();
-
+void average() {
   byte weight;
 
   for (int i=0;i<buzz_size_array;i++)
@@ -687,6 +719,12 @@ void buzzer() {
     }
 
 vario_average = vario_average / (buzz_size_array * (LOOPS / 10));
+}
+
+void buzzer() {
+// if (buzz_volume == 0) disable_timer();
+// else if (/*bt_connect || */buzz_always != 0) {
+  // freq_shift_on();
 
 // if (cnt_loop % (LOOPS/10) == 1) uart.println (vario_average);
 
